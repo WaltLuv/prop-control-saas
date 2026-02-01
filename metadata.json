@@ -1,0 +1,7 @@
+{
+  "name": "PropControl: Residential Portfolio Dashboard",
+  "description": "A comprehensive real estate asset management system featuring automated health scoring, KPI tracking, and professional reporting for residential portfolios.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
