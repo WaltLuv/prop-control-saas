@@ -13,10 +13,10 @@ interface TenantAgentPortalProps {
   onUpdateMessages: (messages: Message[]) => void;
 }
 
-const TenantAgentPortal: React.FC<TenantAgentPortalProps> = ({ 
-  tenants, 
-  assets, 
-  onWorkOrderCreated, 
+const TenantAgentPortal: React.FC<TenantAgentPortalProps> = ({
+  tenants,
+  assets,
+  onWorkOrderCreated,
   onTenantCreated,
   persistedMessages,
   onUpdateMessages
@@ -56,7 +56,7 @@ const TenantAgentPortal: React.FC<TenantAgentPortalProps> = ({
 
       while (true) {
         const response = toolResponse ? await chatRef.current.sendMessage({ message: `[SYSTEM_RESULT]: ${JSON.stringify(toolResponse)}` }) : await chatRef.current.sendMessage({ message: currentInput });
-        toolResponse = null; 
+        toolResponse = null;
 
         if (response.functionCalls && response.functionCalls.length > 0) {
           for (const call of response.functionCalls) {
@@ -90,7 +90,7 @@ const TenantAgentPortal: React.FC<TenantAgentPortalProps> = ({
                 message: m.content,
                 type: 'chat'
               }));
-              
+
               log.push({
                 id: Date.now().toString(),
                 timestamp: new Date().toISOString(),
@@ -116,7 +116,7 @@ const TenantAgentPortal: React.FC<TenantAgentPortalProps> = ({
           }
         } else {
           onUpdateMessages([...newHistory, { id: Date.now().toString(), sender: 'agent', content: response.text, timestamp: new Date().toISOString() }]);
-          break; 
+          break;
         }
       }
     } catch (error) {
@@ -149,7 +149,7 @@ const TenantAgentPortal: React.FC<TenantAgentPortalProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={handleClearChat}
             className="p-2.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
             title="Clear History"
@@ -165,16 +165,14 @@ const TenantAgentPortal: React.FC<TenantAgentPortalProps> = ({
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50 custom-scrollbar">
         {persistedMessages.map(msg => (
           <div key={msg.id} className={`flex gap-4 ${msg.sender === 'agent' ? '' : 'flex-row-reverse'}`}>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              msg.sender === 'agent' ? 'bg-white shadow-sm border border-slate-100' : 'bg-indigo-600'
-            }`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${msg.sender === 'agent' ? 'bg-white shadow-sm border border-slate-100' : 'bg-indigo-600'
+              }`}>
               {msg.sender === 'agent' ? <Bot className="w-5 h-5 text-indigo-600" /> : <User className="w-5 h-5 text-white" />}
             </div>
-            <div className={`max-w-[80%] p-4 rounded-2xl text-sm font-medium leading-relaxed shadow-sm ${
-              msg.sender === 'agent' 
-              ? 'bg-white text-slate-800 border border-slate-100 rounded-tl-none' 
+            <div className={`max-w-[80%] p-4 rounded-2xl text-sm font-medium leading-relaxed shadow-sm ${msg.sender === 'agent'
+              ? 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
               : 'bg-indigo-600 text-white rounded-tr-none'
-            }`}>
+              }`}>
               {msg.content}
             </div>
           </div>
@@ -195,15 +193,15 @@ const TenantAgentPortal: React.FC<TenantAgentPortalProps> = ({
 
       <div className="p-6 bg-white border-t border-slate-100">
         <div className="relative group">
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Tell me about your maintenance issue..."
             className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-6 pr-16 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
           />
-          <button 
+          <button
             onClick={handleSend}
             disabled={!input.trim()}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition disabled:opacity-20 shadow-lg"
@@ -212,12 +210,12 @@ const TenantAgentPortal: React.FC<TenantAgentPortalProps> = ({
           </button>
         </div>
         <div className="mt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
-           <div className="flex items-center gap-1.5">
-             <span className="flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-indigo-400" /> Persistence Enabled</span>
-           </div>
-           <div className="flex items-center gap-1.5">
-             <AlertTriangle className="w-3 h-3 text-amber-400" /> End-to-End Encryption
-           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-indigo-400" /> Persistence Enabled</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <AlertTriangle className="w-3 h-3 text-amber-400" /> End-to-End Encryption
+          </div>
         </div>
       </div>
       <style>{`

@@ -1,0 +1,35 @@
+# SCRIPT VIDÉO : WEWEB SAAS BUILDER (9:16)
+# Durée estimée : 55-60 secondes
+
+---
+
+## 🎬 SCRIPT & VISUELS
+
+| Temps | Narration (Voix Off) | Visuel / Instructions de Montage |
+| :--- | :--- | :--- |
+| 00:00 | "Arrêtez de brûler votre budget dans des mois de développement." | [HOOK] Zoom rapide sur un dashboard complexe. Overlay texte : "STOP AUX DÉLAIS" |
+| 00:05 | "Découvrez WeWeb : le constructeur de SaaS nouvelle génération qui allie la puissance du code et la simplicité du No-Code." | Transition fluide vers l'interface WeWeb. Montage rapide de composants glissés-déposés. |
+| 00:12 | "Besoin d'un dashboard ? D'une logique complexe ? Demandez à l'IA." | Capture d'écran de l'AI Copilot en action générant une formule ou un composant UI. |
+| 00:20 | "Connectez n'importe quel backend : Xano, Supabase, ou vos propres API." | Logos de Xano et Supabase qui gravitent autour du logo WeWeb. |
+| 00:28 | "La différence ? Pas de frais par utilisateur. Scaler à l'infini sans exploser votre facture." | Graphique montrant une courbe d'utilisateurs qui monte et un prix qui reste plat. Texte : "0$ PAR UTILISATEUR" |
+| 00:38 | "Et le plus important : votre code vous appartient. Exportez-le en Vue.js et hébergez-le où vous voulez." | Animation d'une icône de téléchargement/code vers un serveur indépendant. Texte : "ZÉRO LOCK-IN" |
+| 00:48 | "Rejoignez des milliers d'entrepreneurs qui lancent leur MVP en quelques jours." | Succession rapide de logos de startups/logos "Built with WeWeb". |
+| 00:55 | "Construisez votre futur. Cliquez sur le lien en bio pour commencer gratuitement." | CTA final avec le logo WeWeb et une flèche pointant vers le bas (ou le bouton). |
+
+---
+
+## 🛠 INSTRUCTIONS DE MONTAGE (POUR LE MONTEUR)
+
+1. **Rythme :** Le montage doit être dynamique. Faites des coupes franches (jump cuts) toutes les 1.5 à 2 secondes au début pour capter l'attention.
+2. **Typographie :** Utilisez une police moderne et grasse (type Montserrat ou Inter). Les mots-clés doivent apparaître en gros au centre de l'écran en suivant le rythme de la voix.
+3. **Audio :** Musique de fond "Tech/Corporate" mais avec un beat marqué. Baisse du volume sous la voix off, mais hausse lors des transitions visuelles.
+4. **Effets :** Ajoutez des effets de "Glitch" légers sur les parties parlant de code et des zooms progressifs sur les interfaces UI pour montrer les détails.
+5. **Format :** Exportation en 1080x1920 (9:16), optimisé pour TikTok/Reels/Shorts.
+
+---
+
+## 💡 POINTS D'AMÉLIORATION (POUR LA SUITE)
+
+1. **Fluidité des entrées/sorties :** Travailler sur des transitions "Match Cut" entre l'idée (maquette) et la réalité (app fonctionnelle) pour renforcer l'aspect magique de l'outil.
+2. **Voix Off :** Le script est écrit pour une voix "Energique & Visionnaire". Il faudra veiller à ce que l'intonation sur "Zéro Lock-in" soit particulièrement percutante.
+3. **Humanisation :** Ajouter des "B-Rolls" (images d'illustration) de créateurs travaillant sur leur ordinateur portable dans des environnements inspirants pour rendre le produit moins "froid/technique".

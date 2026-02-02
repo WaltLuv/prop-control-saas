@@ -32,13 +32,13 @@ const TenantInbox: React.FC<TenantInboxProps> = ({ tenants, assets, jobs, onRepo
 
   const handleCreateJob = () => {
     if (!aiAnalysis || !selectedTenantId) return;
-    
+
     const tenant = tenants.find(t => t.id === selectedTenantId);
     const asset = assets.find(a => a.id === tenant?.propertyId);
 
-    const existingJob = jobs.find(j => 
-      j.propertyId === asset?.id && 
-      j.issueType === aiAnalysis.category && 
+    const existingJob = jobs.find(j =>
+      j.propertyId === asset?.id &&
+      j.issueType === aiAnalysis.category &&
       [JobStatus.REPORTED, JobStatus.IN_PROGRESS].includes(j.status)
     );
 
@@ -85,7 +85,7 @@ const TenantInbox: React.FC<TenantInboxProps> = ({ tenants, assets, jobs, onRepo
           <div className="space-y-6 flex-1">
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Simulate Incoming From:</label>
-              <select 
+              <select
                 value={selectedTenantId}
                 onChange={(e) => setSelectedTenantId(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -98,7 +98,7 @@ const TenantInbox: React.FC<TenantInboxProps> = ({ tenants, assets, jobs, onRepo
 
             <div className="flex-1 flex flex-col">
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Message Content</label>
-              <textarea 
+              <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder="Ex: My dishwasher is leaking all over the kitchen floor..."
@@ -107,12 +107,11 @@ const TenantInbox: React.FC<TenantInboxProps> = ({ tenants, assets, jobs, onRepo
             </div>
           </div>
 
-          <button 
+          <button
             onClick={handleProcess}
             disabled={isProcessing || !inputText}
-            className={`mt-6 w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${
-              isProcessing ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-200'
-            }`}
+            className={`mt-6 w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${isProcessing ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-xl shadow-slate-200'
+              }`}
           >
             {/* Added missing Loader2 from lucide-react */}
             {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
@@ -149,13 +148,13 @@ const TenantInbox: React.FC<TenantInboxProps> = ({ tenants, assets, jobs, onRepo
             </div>
 
             <div className="flex gap-4">
-              <button 
+              <button
                 onClick={handleCreateJob}
                 className="flex-1 bg-white text-indigo-600 font-black py-4 rounded-2xl uppercase tracking-widest text-sm hover:bg-indigo-50 transition active:scale-95 shadow-lg"
               >
                 Confirm & Open Work Order
               </button>
-              <button 
+              <button
                 onClick={() => setAiAnalysis(null)}
                 className="px-8 py-4 bg-transparent border border-white/30 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-white/10 transition"
               >

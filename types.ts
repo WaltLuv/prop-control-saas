@@ -45,6 +45,7 @@ export type AppTab =
   | 'underwriting'
   | 'rehab-studio'
   | 'loan-pitch'
+  | 'inst-dashboard'
   | 'settings';
 
 export interface CommunicationEntry {
@@ -157,3 +158,66 @@ export interface UserProfile {
   stripeCustomerId?: string;
   subscriptionStatus?: 'active' | 'past_due' | 'canceled' | 'trialing';
 }
+
+// --- Investment Ideas Types ---
+
+export enum DistressType {
+  TAX_LIEN = 'Tax Lien',
+  PRE_FORECLOSURE = 'Pre-Foreclosure',
+  PROBATE = 'Probate',
+  VACANT = 'Vacant',
+  NONE = 'None'
+}
+
+export enum KimiSwarmStatus {
+  QUEUED = 'Queued',
+  DEPLOYING = 'Deploying',
+  RESEARCHING = 'Researching',
+  ANALYZING = 'Analyzing',
+  SYNTHESIZING = 'Synthesizing',
+  COMPLETED = 'Completed',
+  CONTACTED = 'Contacted'
+}
+
+export interface InvestmentLead {
+  id: string; // Internal lead_id
+  assetId: string;
+  propertyAddress: string;
+  propertyName?: string;
+  distressIndicator: DistressType;
+  recordedDate: string;
+  marketValue: number;
+  totalLiabilities: number;
+  equityPct: number;
+  equityLevel: 'Low' | 'Medium' | 'High';
+  swarmStatus: KimiSwarmStatus;
+  ownerPhone?: string;
+  ownerEmail?: string;
+  relativesContact?: string;
+  visionAnalysis?: {
+    roof: number;
+    windows: number;
+    lawn: number;
+    summary?: string;
+  };
+  conditionScore?: number;
+  investorAlpha?: string;
+  image?: string;
+  lat?: number;
+  lng?: number;
+  // SWARM RESEARCH RESULTS
+  arv?: number;  // After Repair Value
+  renovationIdeas?: string[];
+  swarmResearchNotes?: string;
+  estimatedRehabCost?: number;
+}
+
+
+export interface DistressDetail {
+  id: string;
+  leadId: string;
+  lienAmount: number;
+  legalDescription: string;
+  auctionDate?: string;
+}
+

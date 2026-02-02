@@ -34,6 +34,7 @@ import {
   Sparkles,
   Settings as SettingsIcon,
   XCircle,
+  Activity,
 } from 'lucide-react';
 import { AppTab, PlanTier } from '../types';
 import { PLANS } from '../constants/plans';
@@ -51,15 +52,16 @@ interface SidebarProps {
   assetCount: number;
   maxAssets: number;
   planName: string;
+  currentPlan: PlanTier;
 }
 
-type Module = 'operations' | 'investment';
+type Module = 'operations' | 'investment' | 'institutional';
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onClose, onShowUpgradeModal, onManageSubscription, currentPlan, assetCount, maxAssets, planName }) => {
   const [activeModule, setActiveModule] = useState<Module>(
     ['market-intel', 'jv-payout', 'underwriting', 'rehab-studio', 'loan-pitch'].includes(activeTab)
       ? 'investment'
-      : 'operations'
+      : ['inst-dashboard'].includes(activeTab) ? 'institutional' : 'operations'
   );
 
   const opsItems = [
@@ -90,21 +92,27 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
     { id: 'loan-pitch', label: 'Loan Pitch', icon: FileCheck },
   ];
 
-  const currentItems = activeModule === 'operations' ? opsItems : investmentItems;
+  const institutionalItems = [
+    { id: 'inst-dashboard', label: 'Investment Ideas', icon: Activity },
+  ];
+
+  const currentItems = activeModule === 'operations' ? opsItems : activeModule === 'investment' ? investmentItems : institutionalItems;
 
   const isLocked = (item: { id: string }) => {
-    // Investment Tab is exclusive to PRO_MAX
-    if (activeModule === 'investment' && currentPlan !== 'PRO_MAX') {
-      return true;
-    }
+    const planRank: Record<PlanTier, number> = { 'FREE': 0, 'GROWTH': 1, 'PRO': 2, 'PRO_MAX': 3 };
+    const currentRank = planRank[currentPlan];
 
-    // Check Ops items restrictions
-    if (currentPlan === 'FREE') {
-      if (['tenant-agent', 'predictor', 'instant-calculator', 'interior-design', 'inbox', 'work-orders', 'audit', 'estimator'].includes(item.id)) return true;
-    }
-    if (currentPlan === 'GROWTH') {
-      if (['predictor', 'instant-calculator', 'interior-design', 'inbox', 'work-orders'].includes(item.id)) return true;
-    }
+    // GROWTH requirements
+    const growthTabs = ['tenant-agent', 'audit', 'estimator'];
+    if (growthTabs.includes(item.id) && currentRank < 1) return true;
+
+    // PRO requirements
+    const proTabs = ['predictor', 'instant-calculator', 'interior-design', 'inbox', 'work-orders'];
+    if (proTabs.includes(item.id) && currentRank < 2) return true;
+
+    // PRO_MAX requirements (Institutional Module)
+    const proMaxTabs = ['market-intel', 'jv-payout', 'underwriting', 'rehab-studio', 'loan-pitch', 'inst-dashboard'];
+    if (proMaxTabs.includes(item.id) && currentRank < 3) return true;
 
     return false;
   };
@@ -116,6 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
     indigo: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
     emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
   };
+
 
   return (
     <aside className={`
@@ -144,7 +153,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
           <BarChart4 className="w-3.5 h-3.5" /> Ops
         </button>
         <button onClick={() => { setActiveModule('investment'); if (!investmentItems.some(i => i.id === activeTab)) setActiveTab('market-intel'); }} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeModule === 'investment' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>
-          <TrendingUp className="w-3.5 h-3.5" /> Investment
+          <TrendingUp className="w-3.5 h-3.5" /> Inv
+        </button>
+        <button onClick={() => { setActiveModule('institutional'); setActiveTab('inst-dashboard'); }} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeModule === 'institutional' ? 'bg-slate-100 text-black shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>
+          <Crown className="w-3.5 h-3.5" /> Pro
         </button>
       </div>
 

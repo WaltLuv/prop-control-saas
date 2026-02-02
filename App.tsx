@@ -12,7 +12,10 @@ import {
   Job,
   JobStatus,
   Message,
-  UserProfile
+  UserProfile,
+  InvestmentLead,
+  DistressDetail,
+  PlanTier
 } from './types';
 import {
   BENCHMARKS,
@@ -46,6 +49,7 @@ import AlexVoiceTerminal from './components/AlexVoiceTerminal';
 import MaintenancePredictor from './components/MaintenancePredictor';
 import InteriorDesigner from './components/InteriorDesigner';
 import InvestmentModule from './components/InvestmentModule';
+import InstitutionalModule from './components/InstitutionalModule';
 import AuthOverlay from './components/auth/AuthOverlay';
 import UpgradeModal from './components/subscription/UpgradeModal'; // Import Modal
 import Settings from './components/Settings';
@@ -63,6 +67,9 @@ const App: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [kpiEntries, setKpiEntries] = useState<KPIEntry[]>([]);
   const [agentMessages, setAgentMessages] = useState<Message[]>([]);
+  const [investmentLeads, setInvestmentLeads] = useState<InvestmentLead[]>([]);
+  const [distressDetails, setDistressDetails] = useState<DistressDetail[]>([]);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
@@ -78,13 +85,16 @@ const App: React.FC = () => {
         setUser(session.user);
         const data = await fetchPortfolioData();
         if (data) {
-          setUserProfile(data.userProfile || { id: session.user.id, email: session.user.email!, plan: 'FREE' }); // Fallback if missing
+          // PRO_MAX is forced by persistenceService if applicable, so we just trust the data
+          setUserProfile(data.userProfile || { id: session.user.id, email: session.user.email!, plan: 'FREE', stripeCustomerId: undefined, subscriptionStatus: 'inactive' });
           if (data.assets.length > 0) {
             setAssets(data.assets);
             setTenants(data.tenants);
             setContractors(data.contractors);
             setJobs(data.jobs);
             setKpiEntries(data.kpiEntries);
+            setInvestmentLeads(data.investmentLeads || []);
+            setDistressDetails(data.distressDetails || []);
           } else {
             // Seed Data for new users
             setAssets(INITIAL_ASSETS);
@@ -110,20 +120,39 @@ const App: React.FC = () => {
   // Save on Change (Debounced by service)
   useEffect(() => {
     if (user && !loading) {
-      savePortfolioData({ assets, tenants, contractors, jobs, kpiEntries, agentMessages });
+      savePortfolioData({
+        assets, tenants, contractors, jobs, kpiEntries, agentMessages, investmentLeads, distressDetails,
+        userProfile: userProfile! // Pass userProfile to ensure alignment, though sync relies on DB profile table
+      });
     }
-  }, [assets, tenants, contractors, jobs, kpiEntries, agentMessages, user, loading]);
-
+  }, [assets, tenants, contractors, jobs, kpiEntries, agentMessages, user, loading, userProfile]);
 
   // --- LIMIT ENFORCEMENT ---
 
   const handleTabChange = (tab: AppTab) => {
-    // UNLOCKED FOR TESTING: Allow all tabs regardless of plan
+    const planRank: Record<PlanTier, number> = { 'FREE': 0, 'GROWTH': 1, 'PRO': 2, 'PRO_MAX': 3 };
+    const currentRank = planRank[userProfile?.plan || 'FREE'];
+
+    const growthTabs: AppTab[] = ['tenant-agent', 'audit', 'estimator'];
+    const proTabs: AppTab[] = ['predictor', 'instant-calculator', 'interior-design', 'inbox', 'work-orders'];
+    const proMaxTabs: AppTab[] = ['market-intel', 'jv-payout', 'underwriting', 'rehab-studio', 'loan-pitch', 'inst-dashboard' as any];
+
+    // Debug log to trace plan mismatch
+    if (userProfile?.plan === 'FREE') console.log('Current plan is FREE. Access to', tab, 'denied.');
+
+    if (growthTabs.includes(tab) && currentRank < 1) { setShowUpgradeModal(true); return; }
+    if (proTabs.includes(tab) && currentRank < 2) { setShowUpgradeModal(true); return; }
+    if (proMaxTabs.includes(tab) && currentRank < 3) { setShowUpgradeModal(true); return; }
+
     setActiveTab(tab);
   };
 
   const checkAssetLimit = (): boolean => {
-    // UNLOCKED FOR TESTING: Limits removed
+    const maxAssets = PLANS[userProfile?.plan || 'FREE'].maxAssets;
+    if (assets.length >= maxAssets) {
+      setShowUpgradeModal(true);
+      return false;
+    }
     return true;
   };
 
@@ -347,7 +376,9 @@ const App: React.FC = () => {
               <Menu className="w-6 h-6" />
             </button>
             <div>
-              <h1 className="text-4xl font-black text-white capitalize tracking-tighter leading-none mb-2">{activeTab.replace('-', ' ')}</h1>
+              <h1 className="text-4xl font-black text-white capitalize tracking-tighter leading-none mb-2">
+                {activeTab === 'inst-dashboard' ? 'Investment Ideas' : activeTab.replace('-', ' ')}
+              </h1>
               <div className="flex items-center gap-2 text-indigo-400 font-black uppercase tracking-widest text-[10px]">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin-slow" /> {investmentTabs.includes(activeTab) ? 'Capital Allocation Suite' : 'AI Managed Portfolio'}
                 <span className="text-slate-600">|</span>
@@ -433,14 +464,30 @@ const App: React.FC = () => {
           {activeTab === 'instant-calculator' && <InstantTurnCalculator />}
           {activeTab === 'settings' && <Settings userProfile={userProfile} onShowUpgrade={() => setShowUpgradeModal(true)} />}
           {activeTab === 'predictor' && <MaintenancePredictor assets={assets} jobs={jobs} kpiEntries={kpiEntries} />}
+          {activeTab === 'interior-design' && <InteriorDesigner />}
 
-          {investmentTabs.includes(activeTab) && <InvestmentModule activeTab={activeTab} />}
+          {investmentTabs.includes(activeTab) && <InvestmentModule activeTab={activeTab} selectedLeadId={selectedLeadId} investmentLeads={investmentLeads} />}
+          {activeTab === 'inst-dashboard' && (
+            <InstitutionalModule
+              activeTab={activeTab}
+              setActiveTab={handleTabChange}
+              leads={investmentLeads}
+              setLeads={setInvestmentLeads}
+              details={distressDetails}
+              setDetails={setDistressDetails}
+              selectedLeadId={selectedLeadId}
+              setSelectedLeadId={setSelectedLeadId}
+              assets={assets}
+              onUpdateAssets={setAssets}
+            />
+          )}
 
           {activeTab === 'tenant-agent' && (
             <div className="h-[calc(100vh-200px)]">
               <AlexVoiceTerminal
                 isInline
                 tenants={tenants} assets={assets} contractors={contractors} jobs={jobs}
+                plan={userProfile?.plan || 'FREE'}
                 onNavigate={(tab) => { handleTabChange(tab); setIsAlexActive(false); }}
                 onUpdateAssets={setAssets}
                 onUpdateTenants={setTenants}

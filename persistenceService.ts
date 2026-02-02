@@ -1,6 +1,6 @@
 
 import { supabase } from './lib/supabase';
-import { Asset, Tenant, Contractor, Job, KPIEntry, Message } from './types';
+import { Asset, Tenant, Contractor, Job, KPIEntry, Message, InvestmentLead, DistressDetail } from './types';
 
 
 import { UserProfile } from './types';
@@ -13,7 +13,66 @@ export interface PersistentState {
   jobs: Job[];
   kpiEntries: KPIEntry[];
   agentMessages: Message[];
+  investmentLeads: InvestmentLead[];
+  distressDetails: DistressDetail[];
 }
+
+/**
+ * Mappers to convert between Frontend (camelCase) and Backend (snake_case)
+ * This ensures the exact PropControl logic remains untouched in the frontend.
+ */
+const mapLeadFromDB = (l: any): InvestmentLead => ({
+  id: l.lead_id || l.id,
+  assetId: l.asset_id,
+  propertyAddress: l.address || '',
+  propertyName: l.property_name,
+  distressIndicator: l.distress_indicator as any,
+  recordedDate: l.created_at || new Date().toISOString(),
+  marketValue: Number(l.estimated_value || 0),
+  totalLiabilities: Number(l.total_liabilities || 0),
+  equityPct: Number(l.equity_pct || 0),
+  equityLevel: l.equity_level as any,
+  swarmStatus: (l.swarm_status || l.moltbot_status || 'Queued') as any,
+  ownerPhone: l.owner_phone || '',
+  ownerEmail: l.owner_email || '',
+  relativesContact: l.relatives_contact || '',
+  visionAnalysis: l.vision_analysis,
+  conditionScore: l.condition_score,
+  image: l.image_url || ''
+});
+
+const mapLeadToDB = (l: InvestmentLead) => ({
+  id: l.id,
+  asset_id: l.assetId || null,
+  distress_indicator: l.distressIndicator,
+  estimated_value: l.marketValue,
+  total_liabilities: l.totalLiabilities,
+  swarm_status: l.swarmStatus,
+  owner_phone: l.ownerPhone,
+  owner_email: l.ownerEmail,
+  relatives_contact: l.relativesContact,
+  vision_analysis: l.visionAnalysis,
+  condition_score: l.conditionScore,
+  image_url: l.image,
+  created_at: l.recordedDate
+});
+
+const mapDistressDetailFromDB = (d: any): DistressDetail => ({
+  id: d.id,
+  leadId: d.lead_id,
+  lienAmount: Number(d.lien_amount || 0),
+  legalDescription: d.legal_description || '',
+  auctionDate: d.auction_date
+});
+
+const mapDistressDetailToDB = (d: DistressDetail, userId: string) => ({
+  id: d.id,
+  user_id: userId,
+  lead_id: d.leadId,
+  lien_amount: d.lienAmount,
+  legal_description: d.legalDescription,
+  auction_date: d.auctionDate
+});
 
 /**
  * Mappers to convert between Frontend (camelCase) and Backend (snake_case)
@@ -70,23 +129,26 @@ export const fetchPortfolioData = async (): Promise<PersistentState | null> => {
   if (!user) return null;
 
   try {
-    const [profile, assets, tenants, contractors, jobs, kpis] = await Promise.all([
+    const [profile, assets, tenants, contractors, jobs, kpis, leads, details] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
       supabase.from('assets').select('*'),
       supabase.from('tenants').select('*'),
       supabase.from('contractors').select('*'),
       supabase.from('jobs').select('*'),
-      supabase.from('kpi_entries').select('*')
+      supabase.from('kpi_entries').select('*'),
+      supabase.from('investment_ideas_dashboard').select('*'),
+      supabase.from('distress_details').select('*')
     ]);
 
     // Default to FREE if no profile found (rare, but handle safely)
-    const userProfile: UserProfile = profile.data ? {
-      id: profile.data.id,
-      email: profile.data.email,
-      plan: (profile.data.plan as any) || 'FREE',
-      stripeCustomerId: profile.data.stripe_customer_id,
-      subscriptionStatus: profile.data.subscription_status
-    } : { id: user.id, email: user.email!, plan: 'FREE' };
+    // UNLOCKED FOR TESTING: Forcing PRO_MAX and ACTIVE status per user request
+    const userProfile: UserProfile = {
+      id: profile.data?.id || user.id,
+      email: profile.data?.email || user.email!,
+      plan: 'PRO_MAX',
+      stripeCustomerId: profile.data?.stripe_customer_id,
+      subscriptionStatus: 'active'
+    };
 
     // If fetching failed, or data is empty, return defaults or empty
     // NOTE: If new user, this returns empty arrays, which is correct.
@@ -98,7 +160,9 @@ export const fetchPortfolioData = async (): Promise<PersistentState | null> => {
       contractors: contractors.data?.map(mapContractorFromDB) || [],
       jobs: jobs.data?.map(mapJobFromDB) || [],
       kpiEntries: kpis.data?.map(mapKPIFromDB) || [],
-      agentMessages: [] // Chat history not persisted in DB for this scope
+      agentMessages: [],
+      investmentLeads: leads.data?.map(mapLeadFromDB) || [],
+      distressDetails: details.data?.map(mapDistressDetailFromDB) || []
     };
 
   } catch (err) {
@@ -139,6 +203,18 @@ export const syncPortfolioData = (state: PersistentState) => {
       if (state.kpiEntries.length > 0) {
         await supabase.from('kpi_entries').upsert(state.kpiEntries.map(k => mapKPIToDB(k, user.id)));
       }
+      // Upsert Leads - Filter out those without assetId if RLS requires it, 
+      // but we try to save all and let the DB handle it.
+      if (state.investmentLeads.length > 0) {
+        const validLeads = state.investmentLeads.filter(l => l.assetId && l.assetId !== '');
+        if (validLeads.length > 0) {
+          await supabase.from('leads').upsert(validLeads.map(l => mapLeadToDB(l)));
+        }
+      }
+      // Upsert Distress Details
+      if (state.distressDetails && state.distressDetails.length > 0) {
+        await supabase.from('distress_details').upsert(state.distressDetails.map(d => mapDistressDetailToDB(d, user.id)));
+      }
       console.log("Supabase Sync Complete");
     } catch (err) {
       console.error("Supabase Sync Failed:", err);
@@ -156,4 +232,21 @@ export const loadPortfolioData = (): PersistentState | null => {
   // This is synchronous, but Supabase is async.
   // We return null here to force App.tsx to wait/load via useEffect.
   return null;
+};
+export const updateLeadMarketValue = async (leadId: string, newValue: number) => {
+  const { error } = await supabase
+    .from('leads')
+    .update({ estimated_value: newValue })
+    .eq('id', leadId);
+
+  if (error) throw error;
+};
+
+export const updateSwarmStatus = async (leadId: string, status: string) => {
+  const { error } = await supabase
+    .from('leads')
+    .update({ swarm_status: status })
+    .eq('id', leadId);
+
+  if (error) throw error;
 };

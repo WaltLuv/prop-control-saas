@@ -1,11 +1,11 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Mic, MicOff, Zap, X, Volume2, PhoneOff,
   Loader2, BrainCircuit, Activity, RefreshCw, AlertCircle, ShieldCheck,
   Cpu, Radio, Power
 } from 'lucide-react';
-import { Job, Asset, Tenant, JobStatus, Contractor, AppTab, KPIEntry } from '../types';
+import { Job, Asset, Tenant, JobStatus, Contractor, AppTab, KPIEntry, PlanTier } from '../types';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { decode, decodeAudioData, createPcmBlob, ensureAudioContext } from '../audioUtils';
 import * as Tools from '../geminiService';
@@ -24,12 +24,13 @@ interface AlexVoiceTerminalProps {
   onTriggerSpecializedCall: (jobId: string, type: 'DISPATCH' | 'NOTIFY') => void;
   onClose: () => void;
   isInline?: boolean;
+  plan: PlanTier;
 }
 
 const AlexVoiceTerminal: React.FC<AlexVoiceTerminalProps> = ({
   tenants, assets, contractors, jobs,
   onNavigate, onUpdateAssets, onUpdateTenants, onUpdateContractors, onUpdateJobs, onAddKPI,
-  onTriggerSpecializedCall, onClose, isInline = false
+  onTriggerSpecializedCall, onClose, isInline = false, plan
 }) => {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'active' | 'disconnected' | 'error'>('idle');
   const [isMuted, setIsMuted] = useState(false);
@@ -122,6 +123,13 @@ const AlexVoiceTerminal: React.FC<AlexVoiceTerminalProps> = ({
                   onTriggerSpecializedCall(fc.args.jobId, fc.args.type as 'DISPATCH' | 'NOTIFY');
                 } else if (fc.name === 'logPerformance') {
                   onAddKPI({ ...fc.args });
+                } else if (fc.name === 'analyzePortfolio') {
+                  // Feed the AI the current context in the response
+                  result = {
+                    assets: assets.map(a => ({ name: a.name, address: a.address, units: a.units })),
+                    tenants: tenants.map(t => ({ name: t.name, assetId: t.assetId, status: t.status })),
+                    jobs: jobs.map(j => ({ type: j.type, status: j.status, assetId: j.assetId }))
+                  };
                 }
               } catch (e: any) {
                 result = { error: e.message };
@@ -175,17 +183,25 @@ const AlexVoiceTerminal: React.FC<AlexVoiceTerminalProps> = ({
       };
 
       sessionPromiseRef.current = ai.live.connect({
-        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+        model: 'gemini-2.0-flash-exp',
         callbacks,
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } },
-          systemInstruction: `You are Alex, Chief of Ops for PropControl. You manage assets, residents, and dispatch via tools. Be direct and helpful.`,
+          systemInstruction: `You are Alex, PropControl's Chief of Ops and Swarm Orchestrator. You manage assets, residents, and dispatch using neural tools. 
+          The user is currently on the ${plan} plan. 
+          Rank-based permissions: 
+          - FREE: Basic management.
+          - GROWTH: Alex A.I, Ops Audit, Service SOW.
+          - PRO: Neural Predictor, Visual SOW, Work Orders, Manual Inbox.
+          - PRO_MAX: Investment Swarm, Underwriting, JV Engine, Rehab Studio, Loan Pitch.
+          
+          If the user asks for a feature beyond the ${plan} plan, politely explain they need to upgrade. Be direct, professional, and slightly futuristic.`,
           tools: [{
             functionDeclarations: [
               Tools.navigationTool, Tools.manageAssetTool, Tools.manageResidentTool,
               Tools.manageWorkOrderTool, Tools.logPerformanceTool,
-              Tools.initiateCallTool
+              Tools.initiateCallTool, Tools.analyzePortfolioTool
             ]
           }],
           outputAudioTranscription: {},
@@ -195,6 +211,7 @@ const AlexVoiceTerminal: React.FC<AlexVoiceTerminalProps> = ({
     } catch (err) {
       if (!isClosingRef.current) setStatus('error');
     }
+    // No auto-connect on mount to prevent loops. User must explicitely start.
   };
 
   const terminateNeuralLink = () => {
