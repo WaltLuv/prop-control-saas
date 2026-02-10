@@ -38,7 +38,7 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({ isOpen, onClose, asset,
             <h3 className="text-2xl font-black text-slate-900 tracking-tight">Edit Property</h3>
             <p className="text-slate-400 text-sm font-medium">Update asset specifications</p>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 hover:bg-slate-100 rounded-full transition text-slate-400"
           >
@@ -51,7 +51,7 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({ isOpen, onClose, asset,
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Property Name</label>
             <div className="relative">
               <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-              <input 
+              <input
                 required
                 autoFocus
                 type="text"
@@ -67,7 +67,7 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({ isOpen, onClose, asset,
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Full Address</label>
             <div className="relative">
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-              <input 
+              <input
                 required
                 type="text"
                 placeholder="123 Main St, City, State"
@@ -83,13 +83,13 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({ isOpen, onClose, asset,
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Unit Count</label>
               <div className="relative">
                 <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                <input 
+                <input
                   required
                   type="number"
                   placeholder="0"
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition font-semibold text-slate-900"
                   value={formData.units || ''}
-                  onChange={(e) => setFormData({ ...formData, units: Number(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, units: Number(e.target.value) || 1 })}
                 />
               </div>
             </div>
@@ -97,7 +97,7 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({ isOpen, onClose, asset,
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Asset Manager</label>
               <div className="relative">
                 <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                <input 
+                <input
                   required
                   type="text"
                   placeholder="Name"
@@ -110,14 +110,14 @@ const EditAssetModal: React.FC<EditAssetModalProps> = ({ isOpen, onClose, asset,
           </div>
 
           <div className="pt-4 flex gap-4">
-            <button 
+            <button
               type="button"
               onClick={onClose}
               className="flex-1 px-6 py-3.5 rounded-2xl border border-slate-200 text-slate-500 font-bold hover:bg-slate-50 transition"
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
               className="flex-1 px-6 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition shadow-xl shadow-indigo-100"
             >

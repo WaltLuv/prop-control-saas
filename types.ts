@@ -37,7 +37,6 @@ export type AppTab =
   | 'audit'
   | 'estimator'
   | 'instant-calculator'
-  | 'tenant-agent'
   | 'predictor'
   | 'interior-design'
   | 'market-intel'
@@ -210,6 +209,18 @@ export interface InvestmentLead {
   renovationIdeas?: string[];
   swarmResearchNotes?: string;
   estimatedRehabCost?: number;
+  // ENRICHED TREASURE HUNT DATA
+  taxAssessedValue?: number;
+  lastSalePrice?: number;
+  lastSaleDate?: string;
+  pricePerSqFt?: number;
+  squareFeet?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  yearBuilt?: number;
+  daysOnMarket?: number;
+  sourceUrl?: string;
+  listingSource?: string;
 }
 
 

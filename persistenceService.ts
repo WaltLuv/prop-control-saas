@@ -140,14 +140,18 @@ export const fetchPortfolioData = async (): Promise<PersistentState | null> => {
       supabase.from('distress_details').select('*')
     ]);
 
-    // Default to FREE if no profile found (rare, but handle safely)
-    // UNLOCKED FOR TESTING: Forcing PRO_MAX and ACTIVE status per user request
+    // Logic: Admin gets PRO_MAX forever. Everyone else uses their DB plan (SaaS).
+    const isSuperUser = user.email?.toLowerCase() === 'newmoney2217@gmail.com';
+    const dbPlan = profile.data?.plan || 'FREE';
+    // Default subscription status to 'active' if plan is FREE, otherwise check DB
+    const dbStatus = profile.data?.subscription_status || (dbPlan === 'FREE' ? 'active' : 'inactive');
+
     const userProfile: UserProfile = {
       id: profile.data?.id || user.id,
       email: profile.data?.email || user.email!,
-      plan: 'PRO_MAX',
+      plan: isSuperUser ? 'PRO_MAX' : dbPlan as any,
       stripeCustomerId: profile.data?.stripe_customer_id,
-      subscriptionStatus: 'active'
+      subscriptionStatus: isSuperUser ? 'active' : dbStatus
     };
 
     // If fetching failed, or data is empty, return defaults or empty

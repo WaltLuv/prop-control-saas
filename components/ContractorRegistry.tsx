@@ -149,7 +149,7 @@ const ContractorRegistry: React.FC<ContractorRegistryProps> = ({ contractors, jo
                       min="0"
                       max="5"
                       value={editingContractor.rating}
-                      onChange={(e) => setEditingContractor({ ...editingContractor, rating: parseFloat(e.target.value) })}
+                      onChange={(e) => setEditingContractor({ ...editingContractor, rating: parseFloat(e.target.value) || 0 })}
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-10 pr-4 focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-900"
                     />
                   </div>

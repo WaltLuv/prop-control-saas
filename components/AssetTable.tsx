@@ -75,8 +75,8 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, healthMap, onViewAsset,
                         <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${health.statusBand === KPIStatus.GREEN ? 'bg-green-500' :
-                                health.statusBand === KPIStatus.YELLOW ? 'bg-yellow-500' :
-                                  'bg-red-500'
+                              health.statusBand === KPIStatus.YELLOW ? 'bg-yellow-500' :
+                                'bg-red-500'
                               }`}
                             style={{ width: `${health.healthScore}%` }}
                           />
@@ -85,8 +85,8 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, healthMap, onViewAsset,
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${health.statusBand === KPIStatus.GREEN ? 'bg-green-100 text-green-700' :
-                          health.statusBand === KPIStatus.YELLOW ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
+                        health.statusBand === KPIStatus.YELLOW ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
                         }`}>
                         {health.statusBand}
                       </span>
@@ -108,7 +108,11 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, healthMap, onViewAsset,
                           <Edit2 className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => onDeleteAsset(asset.id)}
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to delete "${asset.name}"? This action cannot be undone.`)) {
+                              onDeleteAsset(asset.id);
+                            }
+                          }}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                           title="Delete Asset"
                         >

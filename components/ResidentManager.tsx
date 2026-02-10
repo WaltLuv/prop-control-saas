@@ -113,7 +113,11 @@ const ResidentManager: React.FC<ResidentManagerProps> = ({ tenants, assets, jobs
                     <div className="flex items-center justify-end gap-1">
                       <button onClick={() => setHistoryTenantId(tenant.id)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="View History"><History className="w-4 h-4" /></button>
                       <button onClick={() => setEditingTenant(tenant)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit Resident"><Edit2 className="w-4 h-4" /></button>
-                      <button onClick={() => onDeleteTenant(tenant.id)} className="p-2 text-slate-300 hover:text-rose-600 transition-colors" title="Remove Resident"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => {
+                        if (window.confirm(`Are you sure you want to remove "${tenant.name}"? This action cannot be undone.`)) {
+                          onDeleteTenant(tenant.id);
+                        }
+                      }} className="p-2 text-slate-300 hover:text-rose-600 transition-colors" title="Remove Resident"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
                 </tr>

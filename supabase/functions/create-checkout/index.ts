@@ -25,6 +25,12 @@ const PLANS = {
             monthly: 'price_1SuMnMKrduQQtKdTNtGJmhtq',
             annual: 'price_1SuMkWKrduQQtKdT51Fxui5e',
         }
+    },
+    PRO_MAX: {
+        stripePriceIds: {
+            monthly: 'price_1SwVpQKrduQQtKdTtWPT4DSL',
+            annual: '', // Add annual if available
+        }
     }
 }
 
@@ -44,6 +50,12 @@ serve(async (req) => {
             }
         )
 
+        // Admin client for profile operations (bypasses RLS)
+        const supabaseAdmin = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+        )
+
         const {
             data: { user },
         } = await supabaseClient.auth.getUser()
@@ -55,7 +67,7 @@ serve(async (req) => {
         const { plan, priceId } = await req.json()
 
         // 1. Get or Create Customer
-        const { data: profile } = await supabaseClient
+        const { data: profile } = await supabaseAdmin
             .from('profiles')
             .select('stripe_customer_id')
             .eq('id', user.id)
@@ -73,8 +85,8 @@ serve(async (req) => {
             });
             customerId = customer.id;
 
-            // Save to Supabase
-            await supabaseClient
+            // Save to Supabase (using admin to bypass RLS)
+            await supabaseAdmin
                 .from('profiles')
                 .upsert({
                     id: user.id,
@@ -84,12 +96,19 @@ serve(async (req) => {
         }
 
         // 2. Determine Price ID
-        // Check if direct priceId was sent, or look it up by plan name
+        // Use direct priceId if provided, otherwise look up by plan name
         let finalPriceId = priceId;
-        // If not provided, you could logic mapping here (omitted to keep it simple and flexible)
+
+        if (!finalPriceId && plan) {
+            const planKey = plan.toUpperCase();
+            const planConfig = PLANS[planKey as keyof typeof PLANS];
+            if (planConfig) {
+                finalPriceId = planConfig.stripePriceIds.monthly;
+            }
+        }
 
         if (!finalPriceId) {
-            throw new Error("Price ID is required");
+            throw new Error("Price ID is required. Please provide a priceId or a valid plan name (GROWTH, PRO, PRO_MAX).");
         }
 
         // 3. Create Checkout Session

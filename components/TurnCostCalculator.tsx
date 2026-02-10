@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Calculator, 
-  DollarSign, 
-  Clock, 
-  TrendingDown, 
-  ArrowRight, 
+import {
+  Calculator,
+  DollarSign,
+  Clock,
+  TrendingDown,
+  ArrowRight,
   Info,
   PieChart as PieChartIcon,
   BarChart3
@@ -61,10 +61,10 @@ const TurnCostCalculator: React.FC = () => {
           <div className="space-y-5">
             <div>
               <label className="block text-[10px] font-black text-black uppercase tracking-widest mb-2">Units Turned (Period)</label>
-              <input 
+              <input
                 type="number"
                 value={unitsTurned}
-                onChange={(e) => setUnitsTurned(Number(e.target.value))}
+                onChange={(e) => setUnitsTurned(Number(e.target.value) || 1)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition font-black text-black"
               />
             </div>
@@ -74,10 +74,10 @@ const TurnCostCalculator: React.FC = () => {
                 <label className="block text-[10px] font-black text-black uppercase tracking-widest mb-2">Avg Market Rent</label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
-                  <input 
+                  <input
                     type="number"
                     value={avgMarketRent}
-                    onChange={(e) => setAvgMarketRent(Number(e.target.value))}
+                    onChange={(e) => setAvgMarketRent(Number(e.target.value) || 0)}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition font-black text-black"
                   />
                 </div>
@@ -95,20 +95,20 @@ const TurnCostCalculator: React.FC = () => {
                 <label className="block text-[10px] font-black text-black uppercase tracking-widest mb-2">Avg Turn Days</label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
-                  <input 
+                  <input
                     type="number"
                     value={avgTurnDays}
-                    onChange={(e) => setAvgTurnDays(Number(e.target.value))}
+                    onChange={(e) => setAvgTurnDays(Number(e.target.value) || 0)}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition font-black text-black"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-[10px] font-black text-black uppercase tracking-widest mb-2">Target Days</label>
-                <input 
+                <input
                   type="number"
                   value={targetTurnDays}
-                  onChange={(e) => setTargetTurnDays(Number(e.target.value))}
+                  onChange={(e) => setTargetTurnDays(Number(e.target.value) || 0)}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition font-black text-black"
                 />
               </div>
@@ -118,28 +118,28 @@ const TurnCostCalculator: React.FC = () => {
 
             <div>
               <label className="block text-[10px] font-black text-black uppercase tracking-widest mb-2">Direct Labor / Unit</label>
-              <input 
+              <input
                 type="number"
                 value={laborCost}
-                onChange={(e) => setLaborCost(Number(e.target.value))}
+                onChange={(e) => setLaborCost(Number(e.target.value) || 0)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition font-black text-black"
               />
             </div>
             <div>
               <label className="block text-[10px] font-black text-black uppercase tracking-widest mb-2">Materials / Unit</label>
-              <input 
+              <input
                 type="number"
                 value={materialsCost}
-                onChange={(e) => setMaterialsCost(Number(e.target.value))}
+                onChange={(e) => setMaterialsCost(Number(e.target.value) || 0)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition font-black text-black"
               />
             </div>
             <div>
               <label className="block text-[10px] font-black text-black uppercase tracking-widest mb-2">Leasing & Admin / Unit</label>
-              <input 
+              <input
                 type="number"
                 value={leasingCost}
-                onChange={(e) => setLeasingCost(Number(e.target.value))}
+                onChange={(e) => setLeasingCost(Number(e.target.value) || 0)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition font-black text-black"
               />
             </div>
@@ -190,7 +190,7 @@ const TurnCostCalculator: React.FC = () => {
                 <PieChartIcon className="w-4 h-4 text-black" /> Cost Attribution
               </h3>
             </div>
-            
+
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -207,7 +207,7 @@ const TurnCostCalculator: React.FC = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', color: '#000', fontWeight: '900' }}
                   />
                 </PieChart>
@@ -231,13 +231,13 @@ const TurnCostCalculator: React.FC = () => {
             <h3 className="text-sm font-black text-black mb-8 flex items-center gap-2 uppercase tracking-widest">
               <BarChart3 className="w-4 h-4 text-black" /> Impact Analysis
             </h3>
-            
+
             <div className="space-y-6">
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200">
                 <p className="text-[10px] font-black text-black uppercase tracking-widest mb-2">Vacancy Loss (Per Unit)</p>
                 <div className="flex justify-between items-end">
                   <p className="text-2xl font-black text-black">${calculations.vacancyLoss.toLocaleString()}</p>
-                  <span className="text-[10px] font-black text-red-700 bg-red-100 px-2 py-0.5 rounded-lg">{( (calculations.vacancyLoss / calculations.allInTurnCost) * 100).toFixed(1)}% of total</span>
+                  <span className="text-[10px] font-black text-red-700 bg-red-100 px-2 py-0.5 rounded-lg">{((calculations.vacancyLoss / calculations.allInTurnCost) * 100).toFixed(1)}% of total</span>
                 </div>
               </div>
 

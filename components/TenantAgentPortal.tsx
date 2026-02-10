@@ -199,7 +199,7 @@ const TenantAgentPortal: React.FC<TenantAgentPortalProps> = ({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Tell me about your maintenance issue..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-6 pr-16 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-6 pr-16 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
           />
           <button
             onClick={handleSend}

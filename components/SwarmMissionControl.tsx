@@ -16,27 +16,36 @@ export default function SwarmMissionControl() {
     // Fetch settings on load
     useEffect(() => {
         async function loadSettings() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data, error } = await supabase
-                    .from('user_settings')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .single();
-
-                if (data) {
-                    setSettings(data);
-                } else {
-                    // Initialize if not exists
-                    const { data: newData } = await supabase
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data, error } = await supabase
                         .from('user_settings')
-                        .insert({ user_id: user.id })
-                        .select()
+                        .select('*')
+                        .eq('user_id', user.id)
                         .single();
-                    if (newData) setSettings(newData);
+
+                    if (error && error.code !== 'PGRST116') {
+                        console.error('Error loading settings:', error);
+                    }
+
+                    if (data) {
+                        setSettings(data);
+                    } else {
+                        // Initialize if not exists
+                        const { data: newData } = await supabase
+                            .from('user_settings')
+                            .insert({ user_id: user.id })
+                            .select()
+                            .single();
+                        if (newData) setSettings(newData);
+                    }
                 }
+            } catch (err) {
+                console.error('Failed to load swarm settings:', err);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         }
         loadSettings();
     }, []);
@@ -45,12 +54,17 @@ export default function SwarmMissionControl() {
         const newSettings = { ...settings, [key]: value };
         setSettings(newSettings);
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            await supabase
-                .from('user_settings')
-                .update({ [key]: value })
-                .eq('user_id', user.id);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { error } = await supabase
+                    .from('user_settings')
+                    .update({ [key]: value })
+                    .eq('user_id', user.id);
+                if (error) console.error('Error saving setting:', error);
+            }
+        } catch (err) {
+            console.error('Failed to save swarm setting:', err);
         }
     };
 
@@ -130,7 +144,7 @@ export default function SwarmMissionControl() {
                         <input
                             type="range" min="0" max="100" step="5"
                             value={settings.min_equity_percent}
-                            onChange={(e) => updateSetting('min_equity_percent', parseInt(e.target.value))}
+                            onChange={(e) => updateSetting('min_equity_percent', parseInt(e.target.value) || 0)}
                             className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
                         />
                         <p className="text-[9px] font-medium text-slate-500 text-center">The swarm will ignore any properties below this equity level.</p>
@@ -148,7 +162,7 @@ export default function SwarmMissionControl() {
                         <input
                             type="range" min="1" max="10"
                             value={settings.max_condition_score}
-                            onChange={(e) => updateSetting('max_condition_score', parseInt(e.target.value))}
+                            onChange={(e) => updateSetting('max_condition_score', parseInt(e.target.value) || 1)}
                             className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
                         />
                         <p className="text-[9px] font-medium text-slate-500 text-center">Score of 1 = Total Distressed. Score of 10 = New Build.</p>

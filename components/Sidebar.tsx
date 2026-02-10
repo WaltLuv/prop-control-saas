@@ -13,7 +13,7 @@ import {
   CheckSquare,
   Star,
   FileText,
-  Bot,
+
   UserCircle,
   Database,
   X,
@@ -66,21 +66,21 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
 
   const opsItems = [
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+    { id: 'kpis', label: 'Performance', icon: ClipboardList },
     { id: 'assets', label: 'Properties', icon: Building2 },
     { id: 'tenants', label: 'Residents', icon: UserCircle },
-    { id: 'tenant-agent', label: 'Alex A.I', icon: Bot }, // Growth
+
     { id: 'predictor', label: 'Neural Predictor', icon: BrainCircuit }, // Pro
+    { id: 'estimator', label: 'Service SOW', icon: FileText }, // Growth
     { id: 'instant-calculator', label: 'Visual SOW', icon: Camera }, // Pro
     { id: 'interior-design', label: 'AI Interior Design', icon: Palette }, // Pro
     { id: 'inbox', label: 'Manual Inbox', icon: MessageSquare }, // Pro
     { id: 'work-orders', label: 'Work Orders', icon: Wrench }, // Pro
     { id: 'contractors', label: 'Vendor Grid', icon: Users },
-    { id: 'kpis', label: 'Performance', icon: ClipboardList },
     { id: 'calculator', label: 'Turn Analysis', icon: Calculator },
     { id: 'checklist', label: 'Make-Ready SOP', icon: CheckSquare },
     { id: 'vendors', label: 'Scorecards', icon: Star },
     { id: 'audit', label: 'Operations Audit', icon: ShieldAlert }, // Growth
-    { id: 'estimator', label: 'Service SOW', icon: FileText }, // Growth
   ];
 
   /* ... investmentItems ... */
@@ -103,7 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
     const currentRank = planRank[currentPlan];
 
     // GROWTH requirements
-    const growthTabs = ['tenant-agent', 'audit', 'estimator'];
+    const growthTabs = ['audit', 'estimator'];
     if (growthTabs.includes(item.id) && currentRank < 1) return true;
 
     // PRO requirements
@@ -215,36 +215,49 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
 
       {/* Subscription Badge */}
       <div className="pt-4 border-t border-white/5">
-        <div
-          onClick={() => currentPlan === 'FREE' ? onShowUpgradeModal?.() : onManageSubscription?.()}
-          className={`p-4 rounded-2xl bg-gradient-to-br from-${PLANS[currentPlan].color}-500/10 to-${PLANS[currentPlan].color}-600/5 border border-${PLANS[currentPlan].color}-500/20 cursor-pointer group transition-all hover:scale-[1.02] active:scale-95`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className={`text-[10px] font-black uppercase tracking-widest text-${PLANS[currentPlan].color}-400`}>
-              {PLANS[currentPlan].name} Plan
-            </span>
-            <div className={`p-1.5 rounded-lg bg-${PLANS[currentPlan].color}-500/20`}>
-              <Crown className={`w-3.5 h-3.5 text-${PLANS[currentPlan].color}-400`} />
+        {(() => {
+          // Pre-computed color map to avoid dynamic Tailwind class purging
+          const colorMap: Record<string, { bg: string; text: string; border: string; iconBg: string }> = {
+            slate: { bg: 'from-slate-500/10 to-slate-600/5', text: 'text-slate-400', border: 'border-slate-500/20', iconBg: 'bg-slate-500/20' },
+            indigo: { bg: 'from-indigo-500/10 to-indigo-600/5', text: 'text-indigo-400', border: 'border-indigo-500/20', iconBg: 'bg-indigo-500/20' },
+            violet: { bg: 'from-violet-500/10 to-violet-600/5', text: 'text-violet-400', border: 'border-violet-500/20', iconBg: 'bg-violet-500/20' },
+            amber: { bg: 'from-amber-500/10 to-amber-600/5', text: 'text-amber-400', border: 'border-amber-500/20', iconBg: 'bg-amber-500/20' },
+          };
+          const colors = colorMap[PLANS[currentPlan].color] || colorMap.slate;
+          const isSuperUser = currentPlan === 'PRO_MAX';
+          return (
+            <div
+              onClick={() => isSuperUser ? undefined : (currentPlan === 'FREE' ? onShowUpgradeModal?.() : onManageSubscription?.())}
+              className={`p-4 rounded-2xl bg-gradient-to-br ${colors.bg} border ${colors.border} ${isSuperUser ? '' : 'cursor-pointer'} group transition-all hover:scale-[1.02] active:scale-95`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-[10px] font-black uppercase tracking-widest ${colors.text}`}>
+                  {PLANS[currentPlan].name} Plan
+                </span>
+                <div className={`p-1.5 rounded-lg ${colors.iconBg}`}>
+                  <Crown className={`w-3.5 h-3.5 ${colors.text}`} />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white font-bold text-xs">
+                  {isSuperUser ? 'Owner Access' : currentPlan === 'FREE' ? 'Upgrade Now' : 'Manage Billing'}
+                </span>
+                {!isSuperUser && <ArrowRight className={`w-3.5 h-3.5 ${colors.text} group-hover:translate-x-1 transition-transform`} />}
+              </div>
+              {currentPlan !== 'FREE' && !isSuperUser && (
+                <div className="mt-3 pt-3 border-t border-white/5">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onManageSubscription?.(); }}
+                    className="text-red-400 hover:text-red-300 text-[9px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
+                    title="Cancel your subscription"
+                  >
+                    <XCircle className="w-3 h-3" /> Cancel Subscription
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-white font-bold text-xs">
-              {currentPlan === 'FREE' ? 'Upgrade Now' : 'Manage Billing'}
-            </span>
-            <ArrowRight className={`w-3.5 h-3.5 text-${PLANS[currentPlan].color}-400 group-hover:translate-x-1 transition-transform`} />
-          </div>
-          {currentPlan !== 'FREE' && (
-            <div className="mt-3 pt-3 border-t border-white/5">
-              <button
-                onClick={(e) => { e.stopPropagation(); onManageSubscription?.(); }}
-                className="text-red-400 hover:text-red-300 text-[9px] font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
-                title="Cancel your subscription"
-              >
-                <XCircle className="w-3 h-3" /> Cancel Subscription
-              </button>
-            </div>
-          )}
-        </div>
+          );
+        })()}
       </div>
 
 
@@ -262,16 +275,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
           </div>
         </div>
 
-        <div className="flex items-center gap-4 px-3 hover:bg-white/5 p-3 rounded-[1.5rem] transition-all cursor-pointer border border-transparent hover:border-white/10">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center font-black text-xs text-white shadow-2xl shadow-indigo-600/20 relative shrink-0">
-            AL
-            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-950 rounded-full" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-black text-white uppercase tracking-tight truncate">Alex A.I</p>
-            <p className="text-[9px] text-indigo-400 font-black uppercase tracking-[0.2em] mt-1 truncate">Synchronized</p>
-          </div>
-        </div>
+
       </div>
 
       <style>{`
@@ -280,28 +284,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
       `}</style>
-      <div className="mt-auto px-6 pb-6">
-        <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-          <div className="flex justify-between items-end mb-2">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{planName} Plan</span>
-            <span className="text-[10px] font-bold text-white">
-              {maxAssets > 1000 ? '∞' : `${assetCount} / ${maxAssets}`}
-            </span>
-          </div>
-          <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-1000 ${(assetCount / maxAssets) > 0.9 ? 'bg-rose-500' : 'bg-indigo-500'
-                }`}
-              style={{ width: `${maxAssets > 1000 ? 100 : Math.min((assetCount / maxAssets) * 100, 100)}%` }}
-            />
-          </div>
-          {maxAssets < 1000 && (assetCount / maxAssets) >= 0.8 && (
-            <p className="text-[9px] text-rose-400 font-bold mt-2 text-center animate-pulse">
-              Approaching Limit
-            </p>
-          )}
-        </div>
-      </div>
     </aside>
   );
 };

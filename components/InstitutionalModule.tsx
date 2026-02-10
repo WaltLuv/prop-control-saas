@@ -285,7 +285,19 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                     lawn: l.visionAnalysis?.lawn || 5
                 },
                 lat: l.lat,
-                lng: l.lng
+                lng: l.lng,
+                // Enriched treasure hunt data
+                taxAssessedValue: l.taxAssessedValue || 0,
+                lastSalePrice: l.lastSalePrice || 0,
+                lastSaleDate: l.lastSaleDate || '',
+                pricePerSqFt: l.pricePerSqFt || 0,
+                squareFeet: l.squareFeet || 0,
+                bedrooms: l.bedrooms || 0,
+                bathrooms: l.bathrooms || 0,
+                yearBuilt: l.yearBuilt || 0,
+                daysOnMarket: l.daysOnMarket || 0,
+                sourceUrl: l.sourceUrl || '',
+                listingSource: l.listingSource || ''
             }));
 
             if (mappedLeads.length === 0) {
@@ -1146,8 +1158,8 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                         <div>
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Equity Split (LP/GP)</label>
                                             <div className="flex items-center gap-4">
-                                                <div className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center font-black">70% LP</div>
-                                                <div className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center font-black">30% GP</div>
+                                                <div className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center font-black text-slate-900">70% LP</div>
+                                                <div className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center font-black text-slate-900">30% GP</div>
                                             </div>
                                         </div>
                                     </div>
@@ -1172,7 +1184,7 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Total Investment</label>
                                         <div className="relative">
                                             <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">$</span>
-                                            <input type="number" value={jvInputs.initialInvestment} onChange={(e) => setJvInputs({ ...jvInputs, initialInvestment: parseInt(e.target.value) })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-10 pr-4 font-black" />
+                                            <input type="number" value={jvInputs.initialInvestment} onChange={(e) => setJvInputs({ ...jvInputs, initialInvestment: parseInt(e.target.value) || 0 })} className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-10 pr-4 font-black text-slate-900" />
                                         </div>
                                     </div>
                                     <button
@@ -1238,7 +1250,7 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                             type="range"
                                             min="0" max="90" step="5"
                                             value={swarmSettings.min_equity_percent}
-                                            onChange={(e) => setSwarmSettings(prev => ({ ...prev, min_equity_percent: parseInt(e.target.value) }))}
+                                            onChange={(e) => setSwarmSettings(prev => ({ ...prev, min_equity_percent: parseInt(e.target.value) || 0 }))}
                                             className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                                         />
                                     </div>
@@ -1255,7 +1267,7 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                             type="range"
                                             min="1" max="10" step="1"
                                             value={swarmSettings.max_condition_score}
-                                            onChange={(e) => setSwarmSettings(prev => ({ ...prev, max_condition_score: parseInt(e.target.value) }))}
+                                            onChange={(e) => setSwarmSettings(prev => ({ ...prev, max_condition_score: parseInt(e.target.value) || 1 }))}
                                             className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                                         />
                                     </div>

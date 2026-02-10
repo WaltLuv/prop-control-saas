@@ -45,7 +45,7 @@ import VendorScorecard from './components/VendorScorecard';
 import ServiceEstimator from './components/ServiceEstimator';
 import InstantTurnCalculator from './components/InstantTurnCalculator';
 import ResidentManager from './components/ResidentManager';
-import AlexVoiceTerminal from './components/AlexVoiceTerminal';
+
 import MaintenancePredictor from './components/MaintenancePredictor';
 import InteriorDesigner from './components/InteriorDesigner';
 import InvestmentModule from './components/InvestmentModule';
@@ -53,6 +53,7 @@ import InstitutionalModule from './components/InstitutionalModule';
 import AuthOverlay from './components/auth/AuthOverlay';
 import UpgradeModal from './components/subscription/UpgradeModal'; // Import Modal
 import Settings from './components/Settings';
+import ErrorBoundary from './components/ErrorBoundary';
 import { Menu, RefreshCw, Sparkles, Loader2, Crown, Settings as SettingsIcon } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -74,7 +75,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isAlexActive, setIsAlexActive] = useState(false);
+
   const [showUpgradeModal, setShowUpgradeModal] = useState(false); // Modal State
 
   // Check Auth & Load Data
@@ -86,7 +87,7 @@ const App: React.FC = () => {
         const data = await fetchPortfolioData();
         if (data) {
           // PRO_MAX is forced by persistenceService if applicable, so we just trust the data
-          setUserProfile(data.userProfile || { id: session.user.id, email: session.user.email!, plan: 'FREE', stripeCustomerId: undefined, subscriptionStatus: 'inactive' });
+          setUserProfile(data.userProfile || { id: session.user.id, email: session.user.email!, plan: 'FREE', stripeCustomerId: undefined, subscriptionStatus: undefined });
           if (data.assets.length > 0) {
             setAssets(data.assets);
             setTenants(data.tenants);
@@ -125,7 +126,7 @@ const App: React.FC = () => {
         userProfile: userProfile! // Pass userProfile to ensure alignment, though sync relies on DB profile table
       });
     }
-  }, [assets, tenants, contractors, jobs, kpiEntries, agentMessages, user, loading, userProfile]);
+  }, [assets, tenants, contractors, jobs, kpiEntries, agentMessages, investmentLeads, distressDetails, user, loading, userProfile]);
 
   // --- LIMIT ENFORCEMENT ---
 
@@ -133,7 +134,7 @@ const App: React.FC = () => {
     const planRank: Record<PlanTier, number> = { 'FREE': 0, 'GROWTH': 1, 'PRO': 2, 'PRO_MAX': 3 };
     const currentRank = planRank[userProfile?.plan || 'FREE'];
 
-    const growthTabs: AppTab[] = ['tenant-agent', 'audit', 'estimator'];
+    const growthTabs: AppTab[] = ['audit', 'estimator'];
     const proTabs: AppTab[] = ['predictor', 'instant-calculator', 'interior-design', 'inbox', 'work-orders'];
     const proMaxTabs: AppTab[] = ['market-intel', 'jv-payout', 'underwriting', 'rehab-studio', 'loan-pitch', 'inst-dashboard' as any];
 
@@ -390,18 +391,7 @@ const App: React.FC = () => {
             <button onClick={() => setShowUpgradeModal(true)} className="px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform">
               Upgrade
             </button>
-            {activeTab !== 'tenant-agent' && (
-              <button
-                onClick={() => {
-                  // UNLOCKED FOR TESTING
-                  setIsAlexActive(true);
-                }}
-                className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-indigo-50 transition-all shadow-2xl shadow-indigo-600/30 flex items-center gap-3 active:scale-95 group border border-white/10 relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                <Sparkles className="w-4 h-4 text-white animate-pulse" /> Alex A.I
-              </button>
-            )}
+
             <button
               onClick={() => setActiveTab('settings')}
               className="flex items-center gap-2 px-3 py-2 border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors text-[10px] font-black uppercase tracking-widest"
@@ -418,23 +408,7 @@ const App: React.FC = () => {
           <UpgradeModal currentPlan={userProfile?.plan || 'FREE'} onClose={() => setShowUpgradeModal(false)} />
         )}
 
-        {isAlexActive && (
-          <AlexVoiceTerminal
-            tenants={tenants} assets={assets} contractors={contractors} jobs={jobs}
-            onNavigate={(tab) => { handleTabChange(tab); setIsAlexActive(false); }}
-            onUpdateAssets={setAssets}
-            onUpdateTenants={setTenants}
-            onUpdateContractors={setContractors}
-            onUpdateJobs={setJobs}
-            onAddKPI={(k) => setKpiEntries(prev => [...prev, { ...k, id: `k-${Date.now()}` }])}
-            onTriggerSpecializedCall={(jobId, type) => {
-              if (type === 'DISPATCH') handleDispatch(jobId).catch(console.error);
-              else handleNotify(jobId).catch(console.error);
-              setIsAlexActive(false);
-            }}
-            onClose={() => setIsAlexActive(false)}
-          />
-        )}
+
 
         <div className="max-w-full h-full">
           {activeTab === 'dashboard' && <Dashboard assets={assets} tenants={tenants} contractors={contractors} jobs={jobs} kpiEntries={kpiEntries} healthMap={assetHealthMap} onSelectAsset={(id) => { setSelectedAssetId(id); setActiveTab('assets'); }} onDeleteAsset={(id) => setAssets(a => a.filter(x => x.id !== id))} onAddAsset={handleAddAsset} />}
@@ -454,57 +428,41 @@ const App: React.FC = () => {
               onNotify={handleNotify}
             />
           )}
-          {activeTab === 'contractors' && <ContractorRegistry contractors={contractors} jobs={jobs} onUpdateContractor={(u) => setContractors(prev => prev.map(c => c.id === u.id ? u : c))} onAddContractor={(c) => setContractors(prev => [...prev, c])} />}
-          {activeTab === 'kpis' && <KPILogger assets={assets} benchmarks={BENCHMARKS} kpiEntries={kpiEntries} onSubmit={(e) => setKpiEntries(prev => [...prev, { ...e, id: `k-${Date.now()}` }])} getKPIStatus={getKPIStatus} />}
-          {activeTab === 'calculator' && <TurnCostCalculator />}
-          {activeTab === 'checklist' && <MakeReadyChecklist />}
-          {activeTab === 'vendors' && <VendorScorecard contractors={contractors} jobs={jobs} onUpdateContractor={(u) => setContractors(prev => prev.map(c => c.id === u.id ? u : c))} onAddContractor={(c) => setContractors(prev => [...prev, c])} />}
-          {activeTab === 'audit' && <OpsAudit />}
-          {activeTab === 'estimator' && <ServiceEstimator />}
-          {activeTab === 'instant-calculator' && <InstantTurnCalculator />}
-          {activeTab === 'settings' && <Settings userProfile={userProfile} onShowUpgrade={() => setShowUpgradeModal(true)} />}
-          {activeTab === 'predictor' && <MaintenancePredictor assets={assets} jobs={jobs} kpiEntries={kpiEntries} />}
-          {activeTab === 'interior-design' && <InteriorDesigner />}
+          <ErrorBoundary fallbackMessage="This page encountered an error">
+            {activeTab === 'contractors' && <ContractorRegistry contractors={contractors} jobs={jobs} onUpdateContractor={(u) => setContractors(prev => prev.map(c => c.id === u.id ? u : c))} onAddContractor={(c) => setContractors(prev => [...prev, c])} />}
+            {activeTab === 'kpis' && <KPILogger assets={assets} benchmarks={BENCHMARKS} kpiEntries={kpiEntries} onSubmit={(e) => setKpiEntries(prev => [...prev, { ...e, id: `k-${Date.now()}` }])} getKPIStatus={getKPIStatus} />}
+            {activeTab === 'calculator' && <TurnCostCalculator />}
+            {activeTab === 'checklist' && <MakeReadyChecklist />}
+            {activeTab === 'vendors' && <VendorScorecard contractors={contractors} jobs={jobs} onUpdateContractor={(u) => setContractors(prev => prev.map(c => c.id === u.id ? u : c))} onAddContractor={(c) => setContractors(prev => [...prev, c])} />}
+            {activeTab === 'audit' && <OpsAudit />}
+            {activeTab === 'estimator' && <ServiceEstimator />}
+            {activeTab === 'instant-calculator' && <InstantTurnCalculator />}
+            {activeTab === 'settings' && <Settings userProfile={userProfile} onShowUpgrade={() => setShowUpgradeModal(true)} />}
+            {activeTab === 'predictor' && <MaintenancePredictor assets={assets} jobs={jobs} kpiEntries={kpiEntries} />}
+            {activeTab === 'interior-design' && <InteriorDesigner />}
 
-          {investmentTabs.includes(activeTab) && <InvestmentModule activeTab={activeTab} selectedLeadId={selectedLeadId} investmentLeads={investmentLeads} />}
-          {activeTab === 'inst-dashboard' && (
-            <InstitutionalModule
-              activeTab={activeTab}
-              setActiveTab={handleTabChange}
-              leads={investmentLeads}
-              setLeads={setInvestmentLeads}
-              details={distressDetails}
-              setDetails={setDistressDetails}
-              selectedLeadId={selectedLeadId}
-              setSelectedLeadId={setSelectedLeadId}
-              assets={assets}
-              onUpdateAssets={setAssets}
-            />
-          )}
-
-          {activeTab === 'tenant-agent' && (
-            <div className="h-[calc(100vh-200px)]">
-              <AlexVoiceTerminal
-                isInline
-                tenants={tenants} assets={assets} contractors={contractors} jobs={jobs}
-                plan={userProfile?.plan || 'FREE'}
-                onNavigate={(tab) => { handleTabChange(tab); setIsAlexActive(false); }}
+            {investmentTabs.includes(activeTab) && <InvestmentModule activeTab={activeTab} selectedLeadId={selectedLeadId} investmentLeads={investmentLeads} />}
+            {activeTab === 'inst-dashboard' && (
+              <InstitutionalModule
+                activeTab={activeTab}
+                setActiveTab={handleTabChange}
+                leads={investmentLeads}
+                setLeads={setInvestmentLeads}
+                details={distressDetails}
+                setDetails={setDistressDetails}
+                selectedLeadId={selectedLeadId}
+                setSelectedLeadId={setSelectedLeadId}
+                assets={assets}
                 onUpdateAssets={setAssets}
-                onUpdateTenants={setTenants}
-                onUpdateContractors={setContractors}
-                onUpdateJobs={setJobs}
-                onAddKPI={(k) => setKpiEntries(prev => [...prev, { ...k, id: `k-${Date.now()}` }])}
-                onTriggerSpecializedCall={(jobId, type) => {
-                  if (type === 'DISPATCH') handleDispatch(jobId).catch(console.error);
-                  else handleNotify(jobId).catch(console.error);
-                }}
-                onClose={() => setIsAlexActive(false)}
               />
-            </div>
-          )}
+            )}
+
+
+
+          </ErrorBoundary>
         </div>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 };
 

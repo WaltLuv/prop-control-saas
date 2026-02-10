@@ -53,7 +53,7 @@ export const PLANS: Record<PlanTier, {
             '50 Tenants',
             'Service SOW Generator',
             'Operations Audit',
-            'Alex A.I. Assistant',
+
             'Priority Support'
         ],
         aiAccess: true, // Limited AI
@@ -85,10 +85,10 @@ export const PLANS: Record<PlanTier, {
     PRO_MAX: {
         name: 'Pro Max',
         price: '$99',
-        priceId: 'price_PRO_MAX_MONTHLY_PLACEHOLDER', // Placeholder
+        priceId: 'price_1SwVpQKrduQQtKdTtWPT4DSL',
         priceIds: {
-            monthly: 'price_PRO_MAX_MONTHLY_PLACEHOLDER',
-            annual: 'price_PRO_MAX_ANNUAL_PLACEHOLDER'
+            monthly: 'price_1SwVpQKrduQQtKdTtWPT4DSL',
+            annual: '' // Add annual when available
         },
         maxAssets: 99999,
         maxTenants: 99999,

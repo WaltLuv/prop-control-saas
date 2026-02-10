@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Check, ChevronDown, Image as ImageIcon, LogOut, Moon, Sun, 
+import {
+  Check, ChevronDown, Image as ImageIcon, LogOut, Moon, Sun,
   Sparkles, UploadCloud, XCircle, Sofa, PaintRoller
 } from 'lucide-react';
 import { generateInteriorDesign } from '../geminiService';
@@ -175,34 +175,68 @@ const ImageModal = ({ src, onClose }: { src: string; onClose: () => void }) => {
 };
 
 const EditedImageCard = ({ original, result, onZoom }: any) => {
-  const editedUrl = `data:${result.newImage.mimeType};base64,${result.newImage.data}`;
+  // Safely check if newImage exists before creating URL
+  const hasImage = result?.newImage?.data && result?.newImage?.mimeType;
+  const editedUrl = hasImage
+    ? `data:${result.newImage.mimeType};base64,${result.newImage.data}`
+    : null;
+
   return (
     <div className="glass border border-[rgba(var(--border-rgb),0.6)] rounded-2xl p-6 shadow-xl animate-fade-in-up">
-      <h2 className="text-xl font-black mb-5 text-[var(--text-strong)]">Result</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h3 className="font-bold mb-2 text-[var(--text-strong)]">Original</h3>
-          <img
-            src={original}
-            alt="Original room"
-            className="w-full rounded-xl border border-[rgba(var(--border-rgb),0.6)] object-cover cursor-zoom-in"
-            onClick={() => onZoom(original)}
-          />
+      <h2 className="text-xl font-black mb-5 text-[var(--text-strong)]">AI Design Recommendations</h2>
+
+      {hasImage ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-bold mb-2 text-[var(--text-strong)]">Original</h3>
+            <img
+              src={original}
+              alt="Original room"
+              className="w-full rounded-xl border border-[rgba(var(--border-rgb),0.6)] object-cover cursor-zoom-in"
+              onClick={() => onZoom(original)}
+            />
+          </div>
+          <div>
+            <h3 className="font-bold mb-2 text-[var(--text-strong)]">Edited (Makeover)</h3>
+            <img
+              src={editedUrl!}
+              alt="Edited room"
+              className="w-full rounded-xl border border-[rgba(var(--border-rgb),0.6)] object-contain bg-white/40 cursor-zoom-in"
+              onClick={() => onZoom(editedUrl)}
+            />
+          </div>
         </div>
-        <div>
-          <h3 className="font-bold mb-2 text-[var(--text-strong)]">Edited (Makeover)</h3>
-          <img
-            src={editedUrl}
-            alt="Edited room"
-            className="w-full rounded-xl border border-[rgba(var(--border-rgb),0.6)] object-contain bg-white/40 cursor-zoom-in"
-            onClick={() => onZoom(editedUrl)}
-          />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-bold mb-2 text-[var(--text-strong)]">Your Room</h3>
+            <img
+              src={original}
+              alt="Original room"
+              className="w-full rounded-xl border border-[rgba(var(--border-rgb),0.6)] object-cover cursor-zoom-in"
+              onClick={() => onZoom(original)}
+            />
+          </div>
+          <div className="flex flex-col justify-center">
+            <div className="bg-gradient-to-br from-indigo-500/10 to-teal-500/10 border border-indigo-500/20 rounded-xl p-6">
+              <h3 className="font-bold mb-3 text-[var(--text-strong)] flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-500" />
+                Design Vision Generated
+              </h3>
+              <p className="text-sm text-[var(--text-soft)] italic">
+                AI image generation requires a specialized model. Below are your personalized design recommendations.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-      {result.responseText && (
+      )}
+
+      {result?.responseText && (
         <div className="mt-5 border-t border-[rgba(var(--border-rgb),0.5)] pt-4">
-          <h4 className="font-bold mb-2 text-[var(--text-strong)]">Assistant notes:</h4>
-          <p className="text-sm text-[var(--text-soft)]">{result.responseText}</p>
+          <h4 className="font-bold mb-3 text-[var(--text-strong)]">Design Recommendations</h4>
+          <div className="prose prose-sm max-w-none text-[var(--text-soft)] whitespace-pre-wrap">
+            {result.responseText}
+          </div>
         </div>
       )}
     </div>
@@ -348,9 +382,9 @@ Overall: ultra-clean, magazine-quality render with balanced contrast, soft natur
 const InteriorDesigner: React.FC = () => {
   // Theme state for inner logic
   const [theme, setTheme] = useState("light");
-  
+
   // Images
-  const [images, setImages] = useState<{data: string; mimeType: string}[]>([]);
+  const [images, setImages] = useState<{ data: string; mimeType: string }[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Interior selections
@@ -377,7 +411,7 @@ const InteriorDesigner: React.FC = () => {
     setDecorItems((prev) => (prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]));
   };
 
-  const handleAdd = (file: File, data: {data: string; mimeType: string}) => {
+  const handleAdd = (file: File, data: { data: string; mimeType: string }) => {
     setImages([{ ...data }]);
     const url = URL.createObjectURL(file);
     if (imagePreview) URL.revokeObjectURL(imagePreview);
@@ -465,11 +499,11 @@ const InteriorDesigner: React.FC = () => {
   return (
     <div className="min-h-screen relative font-cairo" style={containerStyle}>
       <style>{styles}</style>
-      
+
       {/* Background Orbs */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-0 overflow-hidden" 
-        style={{ 
+      <div
+        className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
+        style={{
           background: `linear-gradient(145deg, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%)`,
           backgroundAttachment: 'fixed'
         }}
@@ -503,125 +537,125 @@ const InteriorDesigner: React.FC = () => {
           {/* Left Column Controls */}
           <aside className="lg:col-span-2 lg:sticky lg:top-24 self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto custom-scrollbar">
             <div className="glass rounded-2xl border border-[rgba(var(--border-rgb),0.6)] p-6 shadow-xl space-y-6">
-               <div className="flex items-center gap-2 border-b border-white/40 pb-3 text-[var(--text-strong)]">
-                 <PaintRoller className="w-5 h-5" />
-                 <h2 className="text-sm font-bold tracking-wide">Makeover Settings</h2>
-               </div>
-               
-               <UploadImage preview={imagePreview} onAdd={handleAdd} onRemove={handleRemove} disabled={isLoading} />
-               
-               <div>
-                 <SectionTitle>1) Room Type</SectionTitle>
-                 <div className="flex flex-wrap gap-2">
-                   {["Living Room", "Bedroom", "Kitchen", "Bathroom", "Home Office", "Dining Room"].map(o => (
-                     <Pill key={o} active={roomType === o} onClick={() => setRoomType(o)} disabled={isLoading}>{o}</Pill>
-                   ))}
-                 </div>
-               </div>
+              <div className="flex items-center gap-2 border-b border-white/40 pb-3 text-[var(--text-strong)]">
+                <PaintRoller className="w-5 h-5" />
+                <h2 className="text-sm font-bold tracking-wide">Makeover Settings</h2>
+              </div>
 
-               <div>
-                 <SectionTitle>2) Furniture Style</SectionTitle>
-                 <div className="flex flex-wrap gap-2">
-                   {["Modern", "Minimalist", "Scandinavian", "Industrial", "Vintage", "Bohemian"].map(o => (
-                     <Pill key={o} active={furnitureStyle === o} onClick={() => setFurnitureStyle(o)} disabled={isLoading}>{o}</Pill>
-                   ))}
-                 </div>
-               </div>
+              <UploadImage preview={imagePreview} onAdd={handleAdd} onRemove={handleRemove} disabled={isLoading} />
 
-               <div>
-                 <SectionTitle>3) Wall Color</SectionTitle>
-                 <div className="flex flex-wrap gap-3">
-                   {[
-                      { key: "Warm White", color: "#F7F5F2" },
-                      { key: "Cool Grey", color: "#D4D8DD" },
-                      { key: "Sage Green", color: "#A7B9A8" },
-                      { key: "Navy", color: "#0F2A43" },
-                      { key: "Sand Beige", color: "#D9C7A4" },
-                      { key: "Charcoal", color: "#2E2F34" },
-                   ].map(s => (
-                     <Swatch key={s.key} label={s.key} color={s.color} active={wallColor === s.key} onClick={() => setWallColor(s.key)} disabled={isLoading} />
-                   ))}
-                 </div>
-               </div>
+              <div>
+                <SectionTitle>1) Room Type</SectionTitle>
+                <div className="flex flex-wrap gap-2">
+                  {["Living Room", "Bedroom", "Kitchen", "Bathroom", "Home Office", "Dining Room"].map(o => (
+                    <Pill key={o} active={roomType === o} onClick={() => setRoomType(o)} disabled={isLoading}>{o}</Pill>
+                  ))}
+                </div>
+              </div>
 
-               <div>
-                 <SectionTitle>4) Flooring</SectionTitle>
-                 <div className="flex flex-wrap gap-2">
-                   {["Light Wood", "Dark Wood", "Concrete", "Marble", "Patterned Tile", "Carpet"].map(o => (
-                     <Pill key={o} active={flooring === o} onClick={() => setFlooring(o)} disabled={isLoading}>{o}</Pill>
-                   ))}
-                 </div>
-               </div>
+              <div>
+                <SectionTitle>2) Furniture Style</SectionTitle>
+                <div className="flex flex-wrap gap-2">
+                  {["Modern", "Minimalist", "Scandinavian", "Industrial", "Vintage", "Bohemian"].map(o => (
+                    <Pill key={o} active={furnitureStyle === o} onClick={() => setFurnitureStyle(o)} disabled={isLoading}>{o}</Pill>
+                  ))}
+                </div>
+              </div>
 
-               <div>
-                 <SectionTitle>5) Curtains</SectionTitle>
-                 <div className="flex flex-wrap gap-2">
-                   {["Sheer White", "Blackout Dark", "Linen Beige", "Velvet Emerald", "None"].map(o => (
-                     <Pill key={o} active={curtains === o} onClick={() => setCurtains(o)} disabled={isLoading}>{o}</Pill>
-                   ))}
-                 </div>
-               </div>
+              <div>
+                <SectionTitle>3) Wall Color</SectionTitle>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { key: "Warm White", color: "#F7F5F2" },
+                    { key: "Cool Grey", color: "#D4D8DD" },
+                    { key: "Sage Green", color: "#A7B9A8" },
+                    { key: "Navy", color: "#0F2A43" },
+                    { key: "Sand Beige", color: "#D9C7A4" },
+                    { key: "Charcoal", color: "#2E2F34" },
+                  ].map(s => (
+                    <Swatch key={s.key} label={s.key} color={s.color} active={wallColor === s.key} onClick={() => setWallColor(s.key)} disabled={isLoading} />
+                  ))}
+                </div>
+              </div>
 
-               <div>
-                 <SectionTitle>6) Decorative Items</SectionTitle>
-                 <div className="flex flex-wrap gap-2">
-                   {["Indoor Plants", "Floor Lamp", "Wall Art", "Throw Pillows", "Rug", "Books", "Vases"].map(o => (
-                     <Pill key={o} active={decorItems.includes(o)} onClick={() => toggleDecor(o)} disabled={isLoading}>{o}</Pill>
-                   ))}
-                 </div>
-               </div>
-               
-               {/* Overlay Text Inputs */}
-               <div>
-                  <SectionTitle>7) Overlay Text (optional)</SectionTitle>
-                  <div className="grid grid-cols-1 gap-3">
-                    <input type="text" placeholder="Project Name" value={overlayTitle} onChange={e => setOverlayTitle(e.target.value)} disabled={isLoading} className="w-full px-3 py-2 rounded-lg glass border border-[rgba(var(--border-rgb),0.7)] outline-none focus:ring-2 focus:ring-white/40 text-[var(--text-strong)]" />
-                    <input type="text" placeholder="Tagline" value={overlayTagline} onChange={e => setOverlayTagline(e.target.value)} disabled={isLoading} className="w-full px-3 py-2 rounded-lg glass border border-[rgba(var(--border-rgb),0.7)] outline-none focus:ring-2 focus:ring-white/40 text-[var(--text-strong)]" />
-                    <input type="text" placeholder="CTA Label" value={overlayCta} onChange={e => setOverlayCta(e.target.value)} disabled={isLoading} className="w-full px-3 py-2 rounded-lg glass border border-[rgba(var(--border-rgb),0.7)] outline-none focus:ring-2 focus:ring-white/40 text-[var(--text-strong)]" />
-                  </div>
-               </div>
+              <div>
+                <SectionTitle>4) Flooring</SectionTitle>
+                <div className="flex flex-wrap gap-2">
+                  {["Light Wood", "Dark Wood", "Concrete", "Marble", "Patterned Tile", "Carpet"].map(o => (
+                    <Pill key={o} active={flooring === o} onClick={() => setFlooring(o)} disabled={isLoading}>{o}</Pill>
+                  ))}
+                </div>
+              </div>
 
-               {/* Brand Palette */}
-               <div>
-                 <SectionTitle>8) Brand Palette</SectionTitle>
-                 <div className="flex flex-wrap gap-2">
-                   {[
-                      { key: "Teal/Indigo", from: "var(--modern-teal)", to: "var(--modern-indigo)" },
-                      { key: "Sky/Indigo", from: "var(--modern-sky)", to: "var(--modern-indigo)" },
-                      { key: "Indigo/Amber", from: "var(--modern-indigo)", to: "var(--modern-amber)" },
-                      { key: "Teal/Rose", from: "var(--modern-teal)", to: "var(--modern-rose)" },
-                      { key: "Sky/Amber", from: "var(--modern-sky)", to: "var(--modern-amber)" },
-                   ].map(p => (
-                     <button
-                        key={p.key}
-                        type="button"
-                        onClick={() => setBrandPalette(p.key)}
-                        disabled={isLoading}
-                        className={cls(
-                          "relative w-10 h-10 rounded-full border border-[rgba(var(--border-rgb),0.7)] transition hover:scale-105 active:scale-95",
-                          brandPalette === p.key && "ring-2 ring-white/70"
-                        )}
-                        style={{ backgroundImage: `linear-gradient(135deg, ${p.from}, ${p.to})` }}
-                        title={p.key}
-                      >
-                        {brandPalette === p.key && <Check className="absolute inset-0 m-auto w-6 h-6 text-white drop-shadow" />}
-                      </button>
-                   ))}
-                 </div>
-               </div>
+              <div>
+                <SectionTitle>5) Curtains</SectionTitle>
+                <div className="flex flex-wrap gap-2">
+                  {["Sheer White", "Blackout Dark", "Linen Beige", "Velvet Emerald", "None"].map(o => (
+                    <Pill key={o} active={curtains === o} onClick={() => setCurtains(o)} disabled={isLoading}>{o}</Pill>
+                  ))}
+                </div>
+              </div>
 
-               <form onSubmit={onSubmit}>
-                  <button
-                    type="submit"
-                    disabled={isLoading || images.length === 0}
-                    className={cls(
-                      "w-full btn-gradient px-5 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition",
-                      isLoading || images.length === 0 ? "opacity-60 cursor-not-allowed" : "hover:shadow-xl"
-                    )}
-                  >
-                    {isLoading ? "Generating..." : "Transform Image"}
-                  </button>
-               </form>
+              <div>
+                <SectionTitle>6) Decorative Items</SectionTitle>
+                <div className="flex flex-wrap gap-2">
+                  {["Indoor Plants", "Floor Lamp", "Wall Art", "Throw Pillows", "Rug", "Books", "Vases"].map(o => (
+                    <Pill key={o} active={decorItems.includes(o)} onClick={() => toggleDecor(o)} disabled={isLoading}>{o}</Pill>
+                  ))}
+                </div>
+              </div>
+
+              {/* Overlay Text Inputs */}
+              <div>
+                <SectionTitle>7) Overlay Text (optional)</SectionTitle>
+                <div className="grid grid-cols-1 gap-3">
+                  <input type="text" placeholder="Project Name" value={overlayTitle} onChange={e => setOverlayTitle(e.target.value)} disabled={isLoading} className="w-full px-3 py-2 rounded-lg glass border border-[rgba(var(--border-rgb),0.7)] outline-none focus:ring-2 focus:ring-white/40 text-[var(--text-strong)]" />
+                  <input type="text" placeholder="Tagline" value={overlayTagline} onChange={e => setOverlayTagline(e.target.value)} disabled={isLoading} className="w-full px-3 py-2 rounded-lg glass border border-[rgba(var(--border-rgb),0.7)] outline-none focus:ring-2 focus:ring-white/40 text-[var(--text-strong)]" />
+                  <input type="text" placeholder="CTA Label" value={overlayCta} onChange={e => setOverlayCta(e.target.value)} disabled={isLoading} className="w-full px-3 py-2 rounded-lg glass border border-[rgba(var(--border-rgb),0.7)] outline-none focus:ring-2 focus:ring-white/40 text-[var(--text-strong)]" />
+                </div>
+              </div>
+
+              {/* Brand Palette */}
+              <div>
+                <SectionTitle>8) Brand Palette</SectionTitle>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: "Teal/Indigo", from: "var(--modern-teal)", to: "var(--modern-indigo)" },
+                    { key: "Sky/Indigo", from: "var(--modern-sky)", to: "var(--modern-indigo)" },
+                    { key: "Indigo/Amber", from: "var(--modern-indigo)", to: "var(--modern-amber)" },
+                    { key: "Teal/Rose", from: "var(--modern-teal)", to: "var(--modern-rose)" },
+                    { key: "Sky/Amber", from: "var(--modern-sky)", to: "var(--modern-amber)" },
+                  ].map(p => (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => setBrandPalette(p.key)}
+                      disabled={isLoading}
+                      className={cls(
+                        "relative w-10 h-10 rounded-full border border-[rgba(var(--border-rgb),0.7)] transition hover:scale-105 active:scale-95",
+                        brandPalette === p.key && "ring-2 ring-white/70"
+                      )}
+                      style={{ backgroundImage: `linear-gradient(135deg, ${p.from}, ${p.to})` }}
+                      title={p.key}
+                    >
+                      {brandPalette === p.key && <Check className="absolute inset-0 m-auto w-6 h-6 text-white drop-shadow" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <form onSubmit={onSubmit}>
+                <button
+                  type="submit"
+                  disabled={isLoading || images.length === 0}
+                  className={cls(
+                    "w-full btn-gradient px-5 py-3 rounded-xl font-bold shadow-lg active:scale-95 transition",
+                    isLoading || images.length === 0 ? "opacity-60 cursor-not-allowed" : "hover:shadow-xl"
+                  )}
+                >
+                  {isLoading ? "Generating..." : "Transform Image"}
+                </button>
+              </form>
             </div>
           </aside>
 

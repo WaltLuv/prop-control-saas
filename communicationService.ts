@@ -11,12 +11,20 @@ const TWILIO_PHONE_NUMBER = import.meta.env.VITE_TWILIO_PHONE_NUMBER || '';
 const RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY || '';
 const FROM_EMAIL = 'onboarding@resend.dev';
 
+
 /**
  * Places a real phone call using Twilio's Programmable Voice API.
+ * FALLBACK: If credentials are missing, simulates the call for demo purposes.
  */
 export async function placeActualPhoneCall(to: string, vendorName: string, script: string) {
   if (!TWILIO_SID || !TWILIO_AUTH_TOKEN) {
-    throw new Error("Twilio SID or Auth Token is missing.");
+    console.warn(`[SIMULATION] Twilio credentials missing. Simulating call to ${to} (${vendorName}).`);
+    console.log(`[SIMULATION] Script: "${script}"`);
+    return {
+      sid: `SIMULATED_CALL_${Date.now()}`,
+      status: 'queued',
+      simulation: true
+    };
   }
 
   const auth = btoa(`${TWILIO_SID}:${TWILIO_AUTH_TOKEN}`);
@@ -46,10 +54,17 @@ export async function placeActualPhoneCall(to: string, vendorName: string, scrip
 
 /**
  * Sends a real SMS via Twilio's Messaging API.
+ * FALLBACK: If credentials are missing, simulates the SMS for demo purposes.
  */
 export async function sendActualSMS(to: string, message: string) {
   if (!TWILIO_SID || !TWILIO_AUTH_TOKEN) {
-    throw new Error("Twilio credentials missing.");
+    console.warn(`[SIMULATION] Twilio credentials missing. Simulating SMS to ${to}.`);
+    console.log(`[SIMULATION] Body: "${message}"`);
+    return {
+      sid: `SIMULATED_SMS_${Date.now()}`,
+      status: 'queued',
+      simulation: true
+    };
   }
 
   const auth = btoa(`${TWILIO_SID}:${TWILIO_AUTH_TOKEN}`);
@@ -77,10 +92,16 @@ export async function sendActualSMS(to: string, message: string) {
 
 /**
  * Sends a professional email via Resend's REST API.
+ * FALLBACK: If credentials are missing, simulates the email for demo purposes.
  */
 export async function sendActualEmail(to: string, subject: string, body: string) {
   if (!RESEND_API_KEY) {
-    throw new Error("Resend API Key is missing.");
+    console.warn(`[SIMULATION] Resend API Key missing. Simulating email to ${to}.`);
+    console.log(`[SIMULATION] Subject: "${subject}"`);
+    return {
+      id: `SIMULATED_EMAIL_${Date.now()}`,
+      simulation: true
+    };
   }
 
   const response = await fetch('https://api.resend.com/emails', {

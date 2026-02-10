@@ -20,25 +20,25 @@ const KPILogger: React.FC<KPILoggerProps> = ({ assets, benchmarks, kpiEntries, o
   const [lastSubmittedId, setLastSubmittedId] = useState<string | null>(null);
 
   const benchmark = benchmarks.find(b => b.name === kpiName);
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!assetId || !kpiName || value === '') return;
-    
+
     const tempId = `new-${Date.now()}`;
     setLastSubmittedId(tempId);
-    
+
     onSubmit({
       assetId,
       kpiName,
-      value: parseFloat(value),
+      value: parseFloat(value) || 0,
       date,
       commentary
     });
-    
+
     setValue('');
     setCommentary('');
-    
+
     // Clear the highlight after a few seconds
     setTimeout(() => setLastSubmittedId(null), 3000);
   };
@@ -68,12 +68,12 @@ const KPILogger: React.FC<KPILoggerProps> = ({ assets, benchmarks, kpiEntries, o
             <p className="text-lg font-black text-indigo-600 tracking-tighter">{benchmarks.length} Metrics</p>
           </div>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Target Asset</label>
-              <select 
+              <select
                 value={assetId}
                 onChange={(e) => setAssetId(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition font-black text-slate-900 appearance-none shadow-sm"
@@ -83,7 +83,7 @@ const KPILogger: React.FC<KPILoggerProps> = ({ assets, benchmarks, kpiEntries, o
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Benchmark Category</label>
-              <select 
+              <select
                 value={kpiName}
                 onChange={(e) => setKpiName(e.target.value as KPIName)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition font-black text-slate-900 appearance-none shadow-sm"
@@ -99,7 +99,7 @@ const KPILogger: React.FC<KPILoggerProps> = ({ assets, benchmarks, kpiEntries, o
                 Measured Value ({benchmark?.unit === 'percentage' ? '0.00 to 1.00' : benchmark?.unit})
               </label>
               <div className="relative">
-                <input 
+                <input
                   type="number"
                   step="0.001"
                   required
@@ -115,7 +115,7 @@ const KPILogger: React.FC<KPILoggerProps> = ({ assets, benchmarks, kpiEntries, o
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Logging Period (Week Ending)</label>
-              <input 
+              <input
                 type="date"
                 required
                 value={date}
@@ -127,7 +127,7 @@ const KPILogger: React.FC<KPILoggerProps> = ({ assets, benchmarks, kpiEntries, o
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Contextual Commentary</label>
-            <textarea 
+            <textarea
               value={commentary}
               onChange={(e) => setCommentary(e.target.value)}
               placeholder="Explain variances or operational wins..."
@@ -144,20 +144,19 @@ const KPILogger: React.FC<KPILoggerProps> = ({ assets, benchmarks, kpiEntries, o
               <p className="font-black text-indigo-950 uppercase tracking-tight mb-1">Impact Preview</p>
               <div className="flex items-center gap-3">
                 <span className="text-indigo-700/70 font-medium">Metric will be classified as:</span>
-                <span className={`px-4 py-1 rounded-full font-black text-[10px] uppercase tracking-widest shadow-sm ${
-                   value ? (
-                     getKPIStatus(kpiName, parseFloat(value)) === KPIStatus.GREEN ? 'bg-emerald-500 text-white' :
-                     getKPIStatus(kpiName, parseFloat(value)) === KPIStatus.YELLOW ? 'bg-amber-500 text-white' :
-                     'bg-rose-500 text-white'
-                   ) : 'bg-slate-200 text-slate-400'
-                }`}>
+                <span className={`px-4 py-1 rounded-full font-black text-[10px] uppercase tracking-widest shadow-sm ${value ? (
+                    getKPIStatus(kpiName, parseFloat(value)) === KPIStatus.GREEN ? 'bg-emerald-500 text-white' :
+                      getKPIStatus(kpiName, parseFloat(value)) === KPIStatus.YELLOW ? 'bg-amber-500 text-white' :
+                        'bg-rose-500 text-white'
+                  ) : 'bg-slate-200 text-slate-400'
+                  }`}>
                   {value ? getKPIStatus(kpiName, parseFloat(value)) : 'Awaiting Input'}
                 </span>
               </div>
             </div>
           </div>
 
-          <button 
+          <button
             type="submit"
             className="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl hover:bg-indigo-700 transition shadow-2xl shadow-indigo-100 uppercase tracking-widest text-xs active:scale-[0.98] group"
           >
@@ -179,7 +178,7 @@ const KPILogger: React.FC<KPILoggerProps> = ({ assets, benchmarks, kpiEntries, o
             </div>
             Live Performance Feed
           </h3>
-          
+
           <div className="space-y-4 relative z-10 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
             {recentLogs.length > 0 ? recentLogs.map((log, index) => {
               const status = getKPIStatus(log.kpiName, log.value);
@@ -187,23 +186,21 @@ const KPILogger: React.FC<KPILoggerProps> = ({ assets, benchmarks, kpiEntries, o
               const isJustAdded = index === 0 && (lastSubmittedId || Date.now() - new Date(log.id.replace('k-', '')).getTime() < 10000);
 
               return (
-                <div 
-                  key={log.id} 
-                  className={`p-5 rounded-2xl border transition-all duration-500 group/log ${
-                    isJustAdded 
-                    ? 'bg-indigo-600/20 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.2)]' 
-                    : 'bg-white/5 border-white/5 hover:bg-white/10'
-                  }`}
+                <div
+                  key={log.id}
+                  className={`p-5 rounded-2xl border transition-all duration-500 group/log ${isJustAdded
+                      ? 'bg-indigo-600/20 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.2)]'
+                      : 'bg-white/5 border-white/5 hover:bg-white/10'
+                    }`}
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <p className="font-black text-white text-[11px] uppercase tracking-tight mb-1">{asset?.name}</p>
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${
-                          status === KPIStatus.GREEN ? 'bg-emerald-500' :
-                          status === KPIStatus.YELLOW ? 'bg-amber-500' :
-                          'bg-rose-500'
-                        }`} />
+                        <span className={`w-2 h-2 rounded-full ${status === KPIStatus.GREEN ? 'bg-emerald-500' :
+                            status === KPIStatus.YELLOW ? 'bg-amber-500' :
+                              'bg-rose-500'
+                          }`} />
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{log.kpiName}</span>
                       </div>
                     </div>
