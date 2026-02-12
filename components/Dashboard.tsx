@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, PieChart, Pie
 } from 'recharts';
 import { Asset, KPIEntry, AssetHealth, KPIStatus, Job, JobStatus, Contractor, Tenant, Direction } from '../types';
-import { 
+import {
   Wrench,
   Zap,
   Plus,
@@ -40,7 +40,7 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, tenants, contractors, job
   const metrics = useMemo(() => {
     const activeJobs = jobs.filter(j => j.status !== JobStatus.COMPLETED && j.status !== JobStatus.CANCELLED).length;
     const workHoursSaved = jobs.length * 2.5;
-    
+
     // Calculate Portfolio Occupancy based on LATEST KPI LOGS
     // We prioritize the logged 'Occupancy Level' KPI over raw tenant counts for accuracy
     let totalPortfolioUnits = 0;
@@ -54,13 +54,13 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, tenants, contractors, job
 
       // Use KPI value (0.0 - 1.0) if exists, otherwise default to 0
       const occValue = latestOccupancyEntry ? latestOccupancyEntry.value : 0;
-      
+
       totalPortfolioUnits += asset.units;
       totalOccupiedUnitsWeighted += (asset.units * occValue);
     });
 
-    const occupancyRate = totalPortfolioUnits > 0 
-      ? (totalOccupiedUnitsWeighted / totalPortfolioUnits) * 100 
+    const occupancyRate = totalPortfolioUnits > 0
+      ? (totalOccupiedUnitsWeighted / totalPortfolioUnits) * 100
       : 0;
 
     return { activeJobs, workHoursSaved, occupancyRate };
@@ -103,8 +103,8 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, tenants, contractors, job
           name: asset.name,
           units: asset.units,
           // Explicitly tell AI if data is missing or what the specific log says
-          occupancyRate: latestOccupancyEntry 
-            ? `${(latestOccupancyEntry.value * 100).toFixed(1)}%` 
+          occupancyRate: latestOccupancyEntry
+            ? `${(latestOccupancyEntry.value * 100).toFixed(1)}%`
             : "0% (No KPI Logged)",
           kpiDate: latestOccupancyEntry ? latestOccupancyEntry.date : 'N/A'
         };
@@ -133,8 +133,8 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, tenants, contractors, job
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-7 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between group hover:shadow-xl transition-all">
           <div className="flex justify-between items-start mb-6">
-             <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl"><Wrench className="w-5 h-5" /></div>
-             <div className="bg-amber-100 text-amber-700 text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">Active</div>
+            <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl"><Wrench className="w-5 h-5" /></div>
+            <div className="bg-amber-100 text-amber-700 text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">Active</div>
           </div>
           <div>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Maintenance Backlog</p>
@@ -145,8 +145,8 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, tenants, contractors, job
         <div className="bg-indigo-600 p-7 rounded-[2rem] shadow-2xl shadow-indigo-200 border border-white/10 flex flex-col justify-between group hover:scale-[1.02] transition-all relative overflow-hidden">
           <div className="relative z-10 text-white">
             <div className="flex justify-between items-start mb-6">
-               <div className="p-3 bg-white/20 text-white rounded-2xl backdrop-blur-md"><Zap className="w-5 h-5" /></div>
-               <div className="bg-black/40 text-white text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest">Efficiency</div>
+              <div className="p-3 bg-white/20 text-white rounded-2xl backdrop-blur-md"><Zap className="w-5 h-5" /></div>
+              <div className="bg-black/40 text-white text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest">Efficiency</div>
             </div>
             <p className="text-indigo-100 text-[10px] font-black uppercase tracking-[0.2em]">Labor Hours Saved</p>
             <h4 className="text-4xl font-black tracking-tighter mt-1">{metrics.workHoursSaved.toFixed(0)}h</h4>
@@ -187,8 +187,8 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, tenants, contractors, job
           <div className="h-64 w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={70} outerRadius={95} paddingAngle={8} dataKey="value" stroke="none">
-                  {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} cornerRadius={12} />)}
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={70} outerRadius={95} paddingAngle={8} dataKey="value" stroke="none" cornerRadius={12}>
+                  {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
@@ -218,7 +218,7 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, tenants, contractors, job
               <h3 className="text-2xl font-black uppercase tracking-tight">Executive Strategy Engine</h3>
               <p className="text-indigo-300 text-sm font-medium mt-1">AI-driven NOI optimization and asset health analysis.</p>
             </div>
-            <button 
+            <button
               onClick={handleGenerateStrategy}
               disabled={isGeneratingStrategy}
               className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-3 transition shadow-2xl"
@@ -230,13 +230,13 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, tenants, contractors, job
 
           {strategyReport ? (
             <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] animate-in slide-in-from-top-4 duration-500">
-               <div className="flex items-center gap-3 mb-6 text-indigo-400">
-                 <FileText className="w-5 h-5" />
-                 <span className="text-xs font-black uppercase tracking-widest">Tactical Directives for {new Date().toLocaleDateString()}</span>
-               </div>
-               <div className="prose prose-invert prose-slate max-w-none text-slate-300 whitespace-pre-wrap leading-relaxed font-medium">
-                 {strategyReport}
-               </div>
+              <div className="flex items-center gap-3 mb-6 text-indigo-400">
+                <FileText className="w-5 h-5" />
+                <span className="text-xs font-black uppercase tracking-widest">Tactical Directives for {new Date().toLocaleDateString()}</span>
+              </div>
+              <div className="prose prose-invert prose-slate max-w-none text-slate-300 whitespace-pre-wrap leading-relaxed font-medium">
+                {strategyReport}
+              </div>
             </div>
           ) : (
             <div className="text-center py-12 text-slate-500 italic">
@@ -273,16 +273,16 @@ const Dashboard: React.FC<DashboardProps> = ({ assets, tenants, contractors, job
                     <div className={`h-full rounded-full transition-all duration-1000 ${health.statusBand === KPIStatus.GREEN ? 'bg-emerald-500' : health.statusBand === KPIStatus.YELLOW ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${health.healthScore}%` }} />
                   </div>
                   <div className="mt-8 flex items-center justify-between pt-6 border-t border-slate-50">
-                     <div className="flex items-center gap-2 font-black text-[11px] uppercase tracking-wider">
-                       {health.direction === Direction.IMPROVING ? (
-                         <><ArrowUpRight className="w-4 h-4 text-emerald-500" /> <span className="text-emerald-600">Improving</span></>
-                       ) : health.direction === Direction.WATCH ? (
-                         <><ArrowDownRight className="w-4 h-4 text-rose-500" /> <span className="text-rose-600">Watch</span></>
-                       ) : (
-                         <><Minus className="w-4 h-4 text-slate-300" /> <span className="text-slate-400">Stable</span></>
-                       )}
-                     </div>
-                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{asset.manager}</span>
+                    <div className="flex items-center gap-2 font-black text-[11px] uppercase tracking-wider">
+                      {health.direction === Direction.IMPROVING ? (
+                        <><ArrowUpRight className="w-4 h-4 text-emerald-500" /> <span className="text-emerald-600">Improving</span></>
+                      ) : health.direction === Direction.WATCH ? (
+                        <><ArrowDownRight className="w-4 h-4 text-rose-500" /> <span className="text-rose-600">Watch</span></>
+                      ) : (
+                        <><Minus className="w-4 h-4 text-slate-300" /> <span className="text-slate-400">Stable</span></>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{asset.manager}</span>
                   </div>
                 </div>
               </div>

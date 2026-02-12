@@ -1,12 +1,12 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { 
-  PhoneOff, 
-  Mic, 
-  MicOff, 
-  Loader2, 
-  Zap, 
-  ShieldCheck, 
+import {
+  PhoneOff,
+  Mic,
+  MicOff,
+  Loader2,
+  Zap,
+  ShieldCheck,
   X,
   Volume2,
   BellRing,
@@ -25,13 +25,13 @@ interface LiveResidentNotificationConsoleProps {
   onComplete: (logs: CommunicationEntry[]) => void;
 }
 
-const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleProps> = ({ 
-  job, tenant, asset, vendor, onClose, onComplete 
+const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleProps> = ({
+  job, tenant, asset, vendor, onClose, onComplete
 }) => {
   const [status, setStatus] = useState<'connecting' | 'active' | 'disconnected'>('connecting');
   const [isMuted, setIsMuted] = useState(false);
   const [transcripts, setTranscripts] = useState<{ sender: string; text: string }[]>([]);
-  
+
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
@@ -56,19 +56,19 @@ const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleP
       await ensureAudioContext(outputAudioContextRef.current);
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       const callbacks = {
         onopen: () => {
           if (isClosingRef.current) return;
           setStatus('active');
           const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
           const processor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
-          
+
           processor.onaudioprocess = (e: AudioProcessingEvent) => {
             if (isMuted || isClosingRef.current) return;
             const inputData = e.inputBuffer.getChannelData(0);
             const pcmBlob = createPcmBlob(inputData);
-            
+
             sessionPromiseRef.current?.then((session) => {
               if (session) session.sendRealtimeInput({ media: pcmBlob });
             });
@@ -84,7 +84,7 @@ const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleP
           if (base64EncodedAudioString && outputAudioContextRef.current) {
             await ensureAudioContext(outputAudioContextRef.current);
             nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputAudioContextRef.current.currentTime);
-            
+
             const audioBuffer = await decodeAudioData(
               decode(base64EncodedAudioString),
               outputAudioContextRef.current,
@@ -95,7 +95,7 @@ const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleP
             const source = outputAudioContextRef.current.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(outputAudioContextRef.current.destination);
-            
+
             source.addEventListener('ended', () => sourcesRef.current.delete(source));
             source.start(nextStartTimeRef.current);
             nextStartTimeRef.current += audioBuffer.duration;
@@ -103,13 +103,13 @@ const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleP
           }
 
           if (message.serverContent?.outputTranscription) {
-            setTranscripts(prev => [...prev, { sender: 'Alex AI', text: message.serverContent.outputTranscription.text }]);
+            setTranscripts(prev => [...prev, { sender: 'PropControl AI', text: message.serverContent.outputTranscription.text }]);
           } else if (message.serverContent?.inputTranscription) {
             setTranscripts(prev => [...prev, { sender: tenant.name, text: message.serverContent.inputTranscription.text }]);
           }
 
           if (message.serverContent?.interrupted) {
-            sourcesRef.current.forEach(s => { try { s.stop(); } catch(e){} });
+            sourcesRef.current.forEach(s => { try { s.stop(); } catch (e) { } });
             sourcesRef.current.clear();
             nextStartTimeRef.current = 0;
           }
@@ -136,14 +136,14 @@ const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleP
     sessionPromiseRef.current?.then(session => session?.close());
     inputAudioContextRef.current?.close();
     outputAudioContextRef.current?.close();
-    
+
     if (status === 'active' && !isClosingRef.current) {
       onComplete([
         {
           id: `resident-call-${Date.now()}`,
           timestamp: new Date().toISOString(),
           sender: 'AI Agent',
-          message: `[RESIDENT CONCIERGE CALL ENDED]: Alex AI successfully updated ${tenant.name} on work order #${job.id.split('-').pop()}.`,
+          message: `[RESIDENT CONCIERGE CALL ENDED]: PropControl AI successfully updated ${tenant.name} on work order #${job.id.split('-').pop()}.`,
           type: 'notification'
         }
       ]);
@@ -153,7 +153,7 @@ const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleP
   return (
     <div className="fixed inset-0 z-[200] bg-indigo-950/90 backdrop-blur-xl flex items-center justify-center p-4">
       <div className="bg-[#0f172a] w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-white/10 overflow-hidden flex flex-col h-[650px] animate-in zoom-in-95 duration-500">
-        
+
         <div className="p-8 bg-gradient-to-b from-indigo-500/10 to-transparent flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-2xl shadow-indigo-600/30">
@@ -183,33 +183,32 @@ const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleP
               </div>
             )}
             {transcripts.map((t, i) => (
-              <div key={i} className={`flex gap-3 ${t.sender === 'Alex AI' ? '' : 'flex-row-reverse'}`}>
-                 <div className={`px-5 py-3 rounded-2xl text-xs font-bold leading-relaxed shadow-lg ${
-                   t.sender === 'Alex AI' ? 'bg-indigo-600 text-white rounded-tl-none' : 'bg-slate-800 text-indigo-100 rounded-tr-none'
-                 }`}>
-                   <span className="opacity-40 mr-2 uppercase text-[9px] font-black">{t.sender}</span>
-                   {t.text}
-                 </div>
+              <div key={i} className={`flex gap-3 ${t.sender === 'PropControl AI' ? '' : 'flex-row-reverse'}`}>
+                <div className={`px-5 py-3 rounded-2xl text-xs font-bold leading-relaxed shadow-lg ${t.sender === 'PropControl AI' ? 'bg-indigo-600 text-white rounded-tl-none' : 'bg-slate-800 text-indigo-100 rounded-tr-none'
+                  }`}>
+                  <span className="opacity-40 mr-2 uppercase text-[9px] font-black">{t.sender}</span>
+                  {t.text}
+                </div>
               </div>
             ))}
           </div>
 
           <div className="h-20 bg-black/40 rounded-2xl border border-white/5 flex items-center justify-center gap-1.5 px-6">
-             {[...Array(30)].map((_, i) => (
-               <div 
-                key={i} 
+            {[...Array(30)].map((_, i) => (
+              <div
+                key={i}
                 className={`w-1.5 rounded-full transition-all duration-300 ${status === 'active' ? 'bg-indigo-500' : 'bg-slate-800 opacity-20'}`}
-                style={{ 
+                style={{
                   height: status === 'active' && !isMuted ? `${Math.random() * 40 + 10}px` : '4px',
                   animation: status === 'active' && !isMuted ? `pulse-bar 1s ease-in-out infinite ${i * 30}ms` : 'none'
                 }}
-               />
-             ))}
+              />
+            ))}
           </div>
         </div>
 
         <div className="p-8 bg-black/40 border-t border-white/5 flex justify-center items-center gap-8">
-          <button 
+          <button
             onClick={async () => {
               await ensureAudioContext(inputAudioContextRef.current);
               setIsMuted(!isMuted);
@@ -218,8 +217,8 @@ const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleP
           >
             {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
           </button>
-          
-          <button 
+
+          <button
             onClick={stopSession}
             className="px-14 py-6 bg-rose-600 text-white rounded-[2rem] font-black uppercase tracking-widest text-sm flex items-center gap-4 shadow-2xl shadow-rose-600/30 hover:bg-rose-500 transition-all active:scale-95 group"
           >
@@ -233,10 +232,10 @@ const LiveResidentNotificationConsole: React.FC<LiveResidentNotificationConsoleP
         </div>
 
         <div className="px-8 pb-6 text-center">
-           <div className="flex items-center justify-center gap-2 text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">
-             <Sparkles className="w-3 h-3" />
-             Active Resident Satisfaction Guardian
-           </div>
+          <div className="flex items-center justify-center gap-2 text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">
+            <Sparkles className="w-3 h-3" />
+            Active Resident Satisfaction Guardian
+          </div>
         </div>
       </div>
       <style>{`
