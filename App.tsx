@@ -412,7 +412,7 @@ const App: React.FC = () => {
 
         <div className="max-w-full h-full">
           {activeTab === 'dashboard' && <Dashboard assets={assets} tenants={tenants} contractors={contractors} jobs={jobs} kpiEntries={kpiEntries} healthMap={assetHealthMap} onSelectAsset={setSelectedAssetId} onDeleteAsset={(id) => setAssets(prev => prev.filter(a => a.id !== id))} onAddAsset={handleAddAsset} />}
-          {activeTab === 'assets' && (selectedAssetId ? <AssetDetail asset={assets.find(a => a.id === selectedAssetId)!} kpiEntries={kpiEntries.filter(e => e.assetId === selectedAssetId)} health={assetHealthMap[selectedAssetId] || { assetId: selectedAssetId, healthScore: 100, statusBand: KPIStatus.GREEN, redCount: 0, yellowCount: 0, direction: Direction.STABLE }} onBack={() => setSelectedAssetId(null)} onDelete={() => setAssets(prev => prev.filter(a => a.id !== selectedAssetId))} onUpdateAsset={(u) => setAssets(prev => prev.map(a => a.id === u.id ? u : a))} /> : <AssetTable assets={assets} healthMap={assetHealthMap} onViewAsset={setSelectedAssetId} onAddAsset={handleAddAsset} onUpdateAsset={(u) => setAssets(prev => prev.map(a => a.id === u.id ? u : a))} onDeleteAsset={(id) => setAssets(prev => prev.filter(a => a.id !== id))} />)}
+          {activeTab === 'assets' && (selectedAssetId ? <AssetDetail asset={assets.find(a => a.id === selectedAssetId)!} kpiEntries={kpiEntries.filter(e => e.assetId === selectedAssetId)} health={assetHealthMap[selectedAssetId] || { assetId: selectedAssetId, healthScore: 100, statusBand: KPIStatus.GREEN, redCount: 0, yellowCount: 0, direction: Direction.STABLE } as AssetHealth} onBack={() => setSelectedAssetId(null)} onDelete={() => setAssets(prev => prev.filter(a => a.id !== selectedAssetId))} onUpdateAsset={(u) => setAssets(prev => prev.map(a => a.id === u.id ? u : a))} /> : <AssetTable assets={assets} healthMap={assetHealthMap} onViewAsset={setSelectedAssetId} onAddAsset={handleAddAsset} onUpdateAsset={(u) => setAssets(prev => prev.map(a => a.id === u.id ? u : a))} onDeleteAsset={(id) => setAssets(prev => prev.filter(a => a.id !== id))} />)}
           {activeTab === 'tenants' && <ResidentManager tenants={tenants} assets={assets} jobs={jobs} onAddTenant={handleAddTenant} onUpdateTenant={(u) => setTenants(prev => prev.map(t => t.id === u.id ? u : t))} onDeleteTenant={(id) => setTenants(prev => prev.filter(t => t.id !== id))} />}
           {activeTab === 'inbox' && <TenantInbox tenants={tenants} assets={assets} jobs={jobs} onReportIssue={(j) => setJobs(prev => [j, ...prev])} />}
           {activeTab === 'work-orders' && (
@@ -441,7 +441,7 @@ const App: React.FC = () => {
             {activeTab === 'predictor' && <MaintenancePredictor assets={assets} jobs={jobs} kpiEntries={kpiEntries} />}
 
 
-            {investmentTabs.includes(activeTab) && <InvestmentModule activeTab={activeTab} selectedLeadId={selectedLeadId} investmentLeads={investmentLeads} />}
+            {investmentTabs.includes(activeTab as any) && <InvestmentModule activeTab={activeTab} selectedLeadId={selectedLeadId} investmentLeads={investmentLeads} />}
             {activeTab === 'inst-dashboard' && (
               <InstitutionalModule
                 activeTab={activeTab}
