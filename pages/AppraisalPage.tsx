@@ -53,8 +53,15 @@ const AppraisalPage: React.FC = () => {
 
         } catch (err: any) {
             console.error('Appraisal Error:', err);
-            const msg = err.message || 'Unknown error occurred';
-            alert(`Appraisal failed: ${msg}. Check if RENTCAST_API_KEY is set in Supabase Secrets.`);
+            let msg = 'Unknown error occurred';
+
+            if (err.context === 'functions' && err.status) {
+                msg = `Edge Function Error (${err.status}): ${err.message}`;
+            } else if (err.message) {
+                msg = err.message;
+            }
+
+            alert(`Appraisal failed: ${msg}. \n\nNote: If this is a 401 error, your RENTCAST_API_KEY is invalid. If it's a 400 error, please check Supabase logs.`);
         } finally {
             setLoading(false);
         }
