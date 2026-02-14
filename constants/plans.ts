@@ -27,12 +27,13 @@ export const PLANS: Record<PlanTier, {
         price: '$0',
         priceId: '',
         priceIds: { monthly: '', annual: '' },
-        maxAssets: 1,
-        maxTenants: 10,
+        maxAssets: 10,
+        maxTenants: 50,
         features: [
-            '1 Property',
-            '10 Tenants',
-            'Basic Reporting',
+            '10 Units',
+            '50 Tenants',
+            'Property Health Score',
+            'Visual/Real-Time KPI Reporting',
             'Community Support'
         ],
         aiAccess: false,
@@ -46,14 +47,15 @@ export const PLANS: Record<PlanTier, {
             monthly: 'price_1SuMfbKrduQQtKdTGgsHMMMa',
             annual: 'price_1SuMiwKrduQQtKdTeDYVadDY'
         },
-        maxAssets: 10,
-        maxTenants: 50,
+        maxAssets: 100,
+        maxTenants: 200,
         features: [
-            '10 Properties',
-            '50 Tenants',
+            '100 Units',
+            '200 Tenants',
+            'Manual Inbox & Work Orders',
+            'Full Operations Suite',
             'Service SOW Generator',
             'Operations Audit',
-
             'Priority Support'
         ],
         aiAccess: true, // Limited AI
@@ -61,21 +63,20 @@ export const PLANS: Record<PlanTier, {
     },
     PRO: {
         name: 'Pro',
-        price: '$49',
-        priceId: 'price_1SuMnMKrduQQtKdTNtGJmhtq',
+        price: '$39', // Founder's Pricing (was $49)
+        priceId: 'price_1T0DtYKrduQQtKdTEUIxM1cM',
         priceIds: {
-            monthly: 'price_1SuMnMKrduQQtKdTNtGJmhtq',
-            annual: 'price_1SuMkWKrduQQtKdT51Fxui5e'
+            monthly: 'price_1T0DtYKrduQQtKdTEUIxM1cM',
+            annual: 'price_1SuMkWKrduQQtKdT51Fxui5e' // TODO: Update annual if needed
         },
         maxAssets: 9999,
         maxTenants: 9999,
         features: [
-            'Unlimited Properties',
+            'Unlimited Units',
             'Unlimited Tenants',
-            'Work Order Management',
             'Neural Predictor',
-            'Visual SOW Generator',
-            'Manual AI Inbox',
+            'Visual SOW Generator (50/mo)', // Added usage cap note
+            'AI Interior Design',
             'Operations Ledger',
             'Dedicated Account Manager'
         ],
@@ -84,10 +85,10 @@ export const PLANS: Record<PlanTier, {
     },
     PRO_MAX: {
         name: 'Pro Max',
-        price: '$99',
-        priceId: 'price_1SwVpQKrduQQtKdTtWPT4DSL',
+        price: '$79', // Founder's Pricing (was $99)
+        priceId: 'price_1T0DqzKrduQQtKdTkl1cgzAC',
         priceIds: {
-            monthly: 'price_1SwVpQKrduQQtKdTtWPT4DSL',
+            monthly: 'price_1T0DqzKrduQQtKdTkl1cgzAC',
             annual: '' // Add annual when available
         },
         maxAssets: 99999,
@@ -105,3 +106,4 @@ export const PLANS: Record<PlanTier, {
         color: 'emerald'
     }
 };
+

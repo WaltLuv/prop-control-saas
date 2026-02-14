@@ -45,6 +45,7 @@ export type AppTab =
   | 'rehab-studio'
   | 'loan-pitch'
   | 'inst-dashboard'
+  | 'rehab-analyzer'
   | 'settings';
 
 export interface CommunicationEntry {
@@ -156,6 +157,12 @@ export interface UserProfile {
   plan: PlanTier;
   stripeCustomerId?: string;
   subscriptionStatus?: 'active' | 'past_due' | 'canceled' | 'trialing';
+  usageMetadata?: {
+    visual_sow_generated_count?: number;
+    last_reset_date?: string;
+  };
+  trialStart?: string;
+  trialEnd?: string;
 }
 
 // --- Investment Ideas Types ---
@@ -221,6 +228,17 @@ export interface InvestmentLead {
   daysOnMarket?: number;
   sourceUrl?: string;
   listingSource?: string;
+  detailed_rehab_budget?: {
+    overall_difficulty: string; // "1-5 scale"
+    total_estimated_cost: number;
+    room_breakdowns: {
+      room: string;
+      observations: string;
+      recommended_action: string;
+      estimated_cost: number;
+    }[];
+    hidden_damage_warnings: string[];
+  };
 }
 
 

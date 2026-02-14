@@ -25,7 +25,7 @@ import {
   INITIAL_CONTRACTORS,
   INITIAL_JOBS
 } from './constants';
-import { fetchPortfolioData, savePortfolioData } from './persistenceService'; // persistenceService is now updated
+import { fetchPortfolioData, savePortfolioData, incrementUsage } from './persistenceService'; // persistenceService is now updated
 import { placeActualPhoneCall } from './communicationService';
 import { supabase } from './lib/supabase';
 import { PLANS } from './constants/plans'; // Import Plan Logic
@@ -54,6 +54,7 @@ import AuthOverlay from './components/auth/AuthOverlay';
 import UpgradeModal from './components/subscription/UpgradeModal'; // Import Modal
 import Settings from './components/Settings';
 import ErrorBoundary from './components/ErrorBoundary';
+import RehabAnalyzerPage from './components/RehabAnalyzerPage';
 import { Menu, RefreshCw, Sparkles, Loader2, Crown, Settings as SettingsIcon } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -320,6 +321,10 @@ const App: React.FC = () => {
     return <AuthOverlay onAuthSuccess={setUser} />;
   }
 
+  // Trial Calculation
+  const trialEnd = userProfile?.trialEnd ? new Date(userProfile.trialEnd) : null;
+  const trialDaysLeft = trialEnd ? Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : undefined;
+
   // NOTE: Swapped logic - if trying to access InteriorDesign, logic is handled in handleTabChange.
   // If activeTab IS interior-design, it means they are allowed.
   if (activeTab === 'interior-design') {
@@ -338,6 +343,7 @@ const App: React.FC = () => {
           assetCount={assets.length}
           maxAssets={PLANS[userProfile?.plan || 'FREE'].maxAssets}
           planName={PLANS[userProfile?.plan || 'FREE'].name}
+          trialDaysLeft={trialDaysLeft}
         />
         <main className="flex-1 relative overflow-y-auto">
           <div className="absolute top-4 left-4 z-50 md:hidden">
@@ -345,7 +351,24 @@ const App: React.FC = () => {
               <Menu className="w-6 h-6" />
             </button>
           </div>
-          <InteriorDesigner />
+          <InteriorDesigner
+            userProfile={userProfile}
+            onIncrementUsage={() => {
+              // Optimistic update
+              if (userProfile && userProfile.usageMetadata) {
+                const newCount = (userProfile.usageMetadata.visual_sow_generated_count || 0) + 1;
+                setUserProfile({
+                  ...userProfile,
+                  usageMetadata: {
+                    ...userProfile.usageMetadata,
+                    visual_sow_generated_count: newCount
+                  }
+                });
+                // Fire and forget persistence update
+                incrementUsage(userProfile.id, 'visual_sow_generated_count');
+              }
+            }}
+          />
         </main>
       </div>
     );
@@ -368,6 +391,7 @@ const App: React.FC = () => {
         assetCount={assets.length}
         maxAssets={PLANS[userProfile?.plan || 'FREE'].maxAssets}
         planName={PLANS[userProfile?.plan || 'FREE'].name}
+        trialDaysLeft={trialDaysLeft}
       />
 
       <main className="flex-1 p-6 md:p-12 overflow-y-auto relative">
@@ -456,6 +480,7 @@ const App: React.FC = () => {
                 onUpdateAssets={setAssets}
               />
             )}
+            {activeTab === 'rehab-analyzer' && <RehabAnalyzerPage />}
 
 
 

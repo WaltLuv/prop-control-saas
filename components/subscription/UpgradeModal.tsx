@@ -85,7 +85,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ currentPlan, onClose }) => 
                                             <Shield className="w-3 h-3" />
                                         </div>
                                         <span className="text-slate-200 text-sm font-semibold">
-                                            {plan.maxAssets >= 9999 ? 'Unlimited' : plan.maxAssets} Assets
+                                            {plan.maxAssets >= 9999 ? 'Unlimited' : plan.maxAssets} Units
                                         </span>
                                     </div>
                                     {plan.features.map((feat, i) => (
