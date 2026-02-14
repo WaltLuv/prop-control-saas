@@ -55,8 +55,13 @@ const AppraisalPage: React.FC = () => {
             console.error('Appraisal Error:', err);
             let msg = 'Unknown error occurred';
 
-            if (err.context === 'functions' && err.status) {
-                msg = `Edge Function Error (${err.status}): ${err.message}`;
+            if (err.context && typeof err.context.json === 'function') {
+                try {
+                    const body = await err.context.json();
+                    msg = body.error || body.message || msg;
+                } catch (e) {
+                    console.error('Failed to parse error body:', e);
+                }
             } else if (err.message) {
                 msg = err.message;
             }
