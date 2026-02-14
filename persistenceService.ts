@@ -129,16 +129,31 @@ export const fetchPortfolioData = async (): Promise<PersistentState | null> => {
   if (!user) return null;
 
   try {
-    const [profile, assets, tenants, contractors, jobs, kpis, leads, details] = await Promise.all([
+    // Fetch core data first (guaranteed to exist)
+    const [profile, assets, tenants, contractors, jobs, kpis] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
       supabase.from('assets').select('*'),
       supabase.from('tenants').select('*'),
       supabase.from('contractors').select('*'),
       supabase.from('jobs').select('*'),
-      supabase.from('kpi_entries').select('*'),
-      supabase.from('investment_ideas_dashboard').select('*'),
-      supabase.from('distress_details').select('*')
+      supabase.from('kpi_entries').select('*')
     ]);
+
+    // Fetch investment data separately with error handling (may not exist yet)
+    let leads = { data: null, error: null };
+    let details = { data: null, error: null };
+    
+    try {
+      leads = await supabase.from('investment_ideas_dashboard').select('*');
+    } catch (err) {
+      console.warn('investment_ideas_dashboard view not found - run migrations');
+    }
+    
+    try {
+      details = await supabase.from('distress_details').select('*');
+    } catch (err) {
+      console.warn('distress_details table not found - run migrations');
+    }
 
     // Logic: Admin gets PRO_MAX forever. Everyone else uses their DB plan (SaaS).
     const isSuperUser = user.email?.toLowerCase() === 'newmoney2217@gmail.com';
@@ -215,9 +230,13 @@ export const syncPortfolioData = (state: PersistentState) => {
           await supabase.from('leads').upsert(validLeads.map(l => mapLeadToDB(l)));
         }
       }
-      // Upsert Distress Details
+      // Upsert Distress Details (if table exists)
       if (state.distressDetails && state.distressDetails.length > 0) {
-        await supabase.from('distress_details').upsert(state.distressDetails.map(d => mapDistressDetailToDB(d, user.id)));
+        try {
+          await supabase.from('distress_details').upsert(state.distressDetails.map(d => mapDistressDetailToDB(d, user.id)));
+        } catch (err) {
+          console.warn('distress_details table not found - skipping sync');
+        }
       }
       console.log("Supabase Sync Complete");
     } catch (err) {

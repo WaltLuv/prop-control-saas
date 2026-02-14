@@ -7,7 +7,7 @@ headers = []
 [functions."*"]
 
 [build]
-publish = "C:\\Users\\Tenxo\\Downloads\\Prop-Control-Residential-Real-Estate-Platform-main\\Prop-Control-Residential-Real-Estate-Platform-main\\dist"
+publish = "/root/clawd/propcontrol/dist"
 publishOrigin = "config"
 commandOrigin = "config"
 command = "npm run build"
