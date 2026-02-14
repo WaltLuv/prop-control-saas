@@ -199,7 +199,8 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
             setAppraisalResult(data);
         } catch (err: any) {
             console.error('Appraisal failed:', err);
-            alert(`Appraisal failed: ${err.message || 'Please check API Key'}`);
+            const msg = err.message || 'Unknown error';
+            alert(`Appraisal failed: ${msg}. Check Supabase Logs and verify RENTCAST_API_KEY secret.`);
         } finally {
             setIsAppraising(false);
         }

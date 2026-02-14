@@ -53,7 +53,8 @@ const AppraisalPage: React.FC = () => {
 
         } catch (err: any) {
             console.error('Appraisal Error:', err);
-            alert('Failed to fetch valuation data. Ensure RENTCAST_API_KEY is set.');
+            const msg = err.message || 'Unknown error occurred';
+            alert(`Appraisal failed: ${msg}. Check if RENTCAST_API_KEY is set in Supabase Secrets.`);
         } finally {
             setLoading(false);
         }

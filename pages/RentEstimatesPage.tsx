@@ -30,7 +30,8 @@ const RentEstimatesPage: React.FC = () => {
             setData(resData);
         } catch (err: any) {
             console.error('Rent Estimate Error:', err);
-            alert('Failed to fetch rent estimate. Ensure RENTCAST_API_KEY is set.');
+            const msg = err.message || 'Unknown error occurred';
+            alert(`Rent Estimate failed: ${msg}. Check if RENTCAST_API_KEY is set in Supabase Secrets.`);
         } finally {
             setLoading(false);
         }

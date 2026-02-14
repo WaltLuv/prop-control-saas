@@ -100,8 +100,13 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
 
-    } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
+    } catch (error: any) {
+        console.error('Rent Estimate Bundle Error:', error.message);
+        return new Response(JSON.stringify({
+            error: error.message,
+            stack: error.stack,
+            context: "rent-estimate-bundle"
+        }), {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
