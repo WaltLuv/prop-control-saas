@@ -90,7 +90,7 @@ const PropertyPhoto: React.FC<{ address: string }> = ({ address }) => {
     // In a real app, this would use a restricted Google API Key from env/secrets
     // Using a public proxy or placeholder logic for this demo
     const encodedAddress = encodeURIComponent(address);
-    const photoUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${encodedAddress}&fov=90&heading=235&pitch=10&key=demo_key`;
+    const photoUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${encodedAddress}&fov=90&heading=235&pitch=10&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
 
     return (
         <div className="w-full h-full bg-slate-800 relative overflow-hidden group-hover:scale-110 transition-transform duration-[2000ms]">
@@ -470,8 +470,10 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
     };
 
     const handleContactOwner = async (lead: InvestmentLead) => {
-        // Validation removed for testing
-        // if (!lead.ownerPhone && !lead.ownerEmail) ...
+        if (!lead.ownerPhone && !lead.ownerEmail) {
+            alert("No contact info available for this lead.");
+            return;
+        }
 
         setSelectedLeadId(lead.id);
         setIsContactModalOpen(true);

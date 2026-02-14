@@ -83,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
   const investmentItems = [
     { id: 'market-intel', label: 'Market Intel', icon: Globe },
     { id: 'jv-payout', label: 'JV Payout Engine', icon: Coins },
-    { id: 'underwriting', label: 'Underwriting', icon: Table },
+    { id: 'underwriting', label: 'Deal Analysis', icon: Table },
     { id: 'rehab-studio', label: 'Rehab Studio', icon: Hammer },
     { id: 'loan-pitch', label: 'Loan Pitch', icon: FileCheck },
     { id: 'rehab-analyzer', label: 'Deep Rehab Analyzer', icon: Sparkles },
