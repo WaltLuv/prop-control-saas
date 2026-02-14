@@ -27,41 +27,63 @@ serve(async (req) => {
         const hashArray = Array.from(new Uint8Array(hashBuffer))
         const addressHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 
-        // Check Cache
-        const { data: cacheHit } = await supabase
+        // 1. Check Appraisal Cache
+        const { data: appCacheHit } = await supabase
             .from('property_appraisal_cache')
             .select('*')
             .eq('address_hash', addressHash)
             .gt('expires_at', new Date().toISOString())
             .maybeSingle()
 
-        if (cacheHit) {
-            return new Response(JSON.stringify(cacheHit.payload), {
+        // 2. Check Rent Cache
+        const { data: rentCacheHit } = await supabase
+            .from('property_rent_cache')
+            .select('*')
+            .eq('address_hash', addressHash)
+            .gt('expires_at', new Date().toISOString())
+            .maybeSingle()
+
+        // If both hit, return combined
+        if (appCacheHit && rentCacheHit) {
+            return new Response(JSON.stringify({
+                ...appCacheHit.payload,
+                rent: rentCacheHit.payload.estimate,
+                rentRangeLow: rentCacheHit.payload.rangeLow,
+                rentRangeHigh: rentCacheHit.payload.rangeHigh,
+                rentComparables: rentCacheHit.payload.comparables
+            }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             })
         }
 
-        // Fetch AVM (Value)
         if (!RENTCAST_API_KEY) throw new Error('RentCast API Key missing')
 
-        const url = new URL('https://api.rentcast.io/v1/avm/value')
-        url.searchParams.append('address', address)
-        if (propertyType) url.searchParams.append('propertyType', propertyType) // Helps AVM accuracy
+        // 3. Fetch AVM (Value)
+        const avmUrl = new URL('https://api.rentcast.io/v1/avm/value')
+        avmUrl.searchParams.append('address', address)
+        if (propertyType) avmUrl.searchParams.append('propertyType', propertyType)
+        if (beds) avmUrl.searchParams.append('bedrooms', beds.toString())
 
-        // Note: We don't verify beds/baths/sqft params for AVM as strictly, but good to pass if likely accurate
-        if (beds) url.searchParams.append('bedrooms', beds.toString())
+        // 4. Fetch Rent (Long Term)
+        const rentUrl = new URL('https://api.rentcast.io/v1/avm/rent/long-term')
+        rentUrl.searchParams.append('address', address)
+        if (propertyType) rentUrl.searchParams.append('propertyType', propertyType)
+        if (beds) rentUrl.searchParams.append('bedrooms', beds.toString())
+        if (baths) rentUrl.searchParams.append('bathrooms', baths.toString())
+        if (sqft) rentUrl.searchParams.append('squareFootage', sqft.toString())
 
-        const res = await fetch(url.toString(), {
-            headers: { 'X-Api-Key': RENTCAST_API_KEY, 'accept': 'application/json' }
-        })
+        const [avmRes, rentRes] = await Promise.all([
+            fetch(avmUrl.toString(), { headers: { 'X-Api-Key': RENTCAST_API_KEY, 'accept': 'application/json' } }),
+            fetch(rentUrl.toString(), { headers: { 'X-Api-Key': RENTCAST_API_KEY, 'accept': 'application/json' } })
+        ])
 
-        if (!res.ok) throw new Error(`RentCast AVM failed: ${res.statusText}`)
-        const avmData = await res.json()
+        if (!avmRes.ok) throw new Error(`RentCast AVM (Value) failed: ${avmRes.statusText}`)
+        if (!rentRes.ok) throw new Error(`RentCast AVM (Rent) failed: ${rentRes.statusText}`)
 
-        // Additional: Fetch Sale Comps explicitly if not fully included in AVM response (RentCast AVM usually includes some)
-        // For this bundle, we rely on the AVM endpoint's "comparables" array.
+        const avmData = await avmRes.json()
+        const rentData = await rentRes.json()
 
-        const payload = {
+        const appraisalPayload = {
             valuation: {
                 price: avmData.price,
                 rangeLow: avmData.priceRangeLow,
@@ -71,18 +93,45 @@ serve(async (req) => {
             fetchedAt: new Date().toISOString()
         }
 
-        // Save to Cache
+        const rentPayload = {
+            estimate: rentData.rent,
+            rangeLow: rentData.rentRangeLow,
+            rangeHigh: rentData.rentRangeHigh,
+            currency: rentData.currency,
+            comparables: rentData.comparables || [],
+            marketStats: {
+                averageRent: rentData.comparables ? rentData.comparables.reduce((acc: any, c: any) => acc + c.price, 0) / rentData.comparables.length : 0,
+                compCount: rentData.comparables ? rentData.comparables.length : 0
+            },
+            fetchedAt: new Date().toISOString()
+        }
+
+        // 5. Save to Cache
         const expiresAt = new Date()
-        expiresAt.setDate(expiresAt.getDate() + 30) // 30 Day Cache
+        expiresAt.setDate(expiresAt.getDate() + 14) // 14 Day Cache for Freshness
 
-        await supabase.from('property_appraisal_cache').insert({
-            property_id: propertyId,
-            address_hash: addressHash,
-            payload: payload,
-            expires_at: expiresAt.toISOString()
-        })
+        await Promise.all([
+            supabase.from('property_appraisal_cache').insert({
+                property_id: propertyId,
+                address_hash: addressHash,
+                payload: appraisalPayload,
+                expires_at: expiresAt.toISOString()
+            }),
+            supabase.from('property_rent_cache').insert({
+                property_id: propertyId,
+                address_hash: addressHash,
+                payload: rentPayload,
+                expires_at: expiresAt.toISOString()
+            })
+        ])
 
-        return new Response(JSON.stringify(payload), {
+        return new Response(JSON.stringify({
+            ...appraisalPayload,
+            rent: rentPayload.estimate,
+            rentRangeLow: rentPayload.rangeLow,
+            rentRangeHigh: rentPayload.rangeHigh,
+            rentComparables: rentPayload.comparables
+        }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
 

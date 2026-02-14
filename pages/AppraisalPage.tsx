@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { Asset } from '../types';
 import { supabase } from '../lib/supabase';
-import { Loader2, TrendingUp, Calculator, ShieldCheck, ArrowRight, PenTool } from 'lucide-react';
+import { Loader2, TrendingUp, Calculator, ShieldCheck, ArrowRight, PenTool, Coins } from 'lucide-react';
 
 interface PropertyContextType {
     property: Asset;
@@ -130,15 +130,22 @@ const AppraisalPage: React.FC = () => {
                         </div>
 
                         <div className="mt-8 pt-8 border-t border-slate-800">
-                            <h4 className="text-xs font-bold text-slate-500 uppercase mb-4">Basis for Valuation</h4>
-                            <div className="grid grid-cols-2 gap-4">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase mb-4">Market Context</h4>
+                            <div className="grid grid-cols-3 gap-4">
                                 <div className="p-3 bg-slate-950 rounded-lg">
                                     <div className="text-slate-400 text-xs">Comps Used</div>
                                     <div className="text-white font-bold">{data.comparables?.length || 0}</div>
                                 </div>
                                 <div className="p-3 bg-slate-950 rounded-lg">
                                     <div className="text-slate-400 text-xs">Confidence</div>
-                                    <div className="text-emerald-400 font-bold">High (Automated)</div>
+                                    <div className="text-emerald-400 font-bold">High (AI)</div>
+                                </div>
+                                <div className="p-3 bg-purple-900/20 border border-purple-500/20 rounded-lg">
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                        <Coins className="w-3 h-3 text-purple-400" />
+                                        <div className="text-purple-300 text-[10px] font-black uppercase tracking-widest">Est. Rent</div>
+                                    </div>
+                                    <div className="text-white font-bold">${data.rent?.toLocaleString() || 'N/A'}</div>
                                 </div>
                             </div>
                         </div>

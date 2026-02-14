@@ -9,10 +9,10 @@ const PRICE_TO_PLAN: Record<string, string> = {
     'price_1SuMfbKrduQQtKdTGgsHMMMa': 'GROWTH',  // monthly
     'price_1SuMiwKrduQQtKdTeDYVadDY': 'GROWTH',  // annual
     // PRO
-    'price_1SuMnMKrduQQtKdTNtGJmhtq': 'PRO',     // monthly
+    'price_1T0DtYKrduQQtKdTEUIxM1cM': 'PRO',     // monthly
     'price_1SuMkWKrduQQtKdT51Fxui5e': 'PRO',     // annual
     // PRO_MAX
-    'price_1SwVpQKrduQQtKdTtWPT4DSL': 'PRO_MAX', // monthly
+    'price_1T0DqzKrduQQtKdTkl1cgzAC': 'PRO_MAX', // monthly
 }
 
 const corsHeaders = {
