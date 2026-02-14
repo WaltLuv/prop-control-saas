@@ -13,8 +13,13 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({ isOpen, onClose, onSave }
   const [formData, setFormData] = useState({
     name: '',
     address: '',
+    city: '',
+    state: '',
+    zip: '',
     units: 0,
-    manager: ''
+    manager: '',
+    status: 'STABILIZED',
+    propertyType: 'MULTIFAMILY'
   });
 
   if (!isOpen) return null;
@@ -24,9 +29,11 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({ isOpen, onClose, onSave }
     if (!formData.name || !formData.address || !formData.manager) return;
     onSave({
       ...formData,
-      units: Number(formData.units)
+      units: Number(formData.units),
+      status: formData.status as any,
+      propertyType: formData.propertyType as any
     });
-    setFormData({ name: '', address: '', units: 0, manager: '' });
+    setFormData({ name: '', address: '', city: '', state: '', zip: '', units: 0, manager: '', status: 'STABILIZED', propertyType: 'MULTIFAMILY' });
   };
 
   return (
@@ -73,6 +80,44 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({ isOpen, onClose, onSave }
                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition font-semibold text-slate-900"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+            </div>
+          </div>
+
+
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">City</label>
+              <input
+                required
+                type="text"
+                placeholder="City"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition font-semibold text-slate-900"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">State</label>
+              <input
+                required
+                type="text"
+                placeholder="ST"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition font-semibold text-slate-900"
+                value={formData.state}
+                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Zip</label>
+              <input
+                required
+                type="text"
+                placeholder="00000"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition font-semibold text-slate-900"
+                value={formData.zip}
+                onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
               />
             </div>
           </div>
@@ -124,8 +169,8 @@ const AddAssetModal: React.FC<AddAssetModalProps> = ({ isOpen, onClose, onSave }
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

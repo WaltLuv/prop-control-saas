@@ -1,0 +1,17 @@
+﻿components/AddAssetModal.tsx(25,12): error TS2345: Argument of type '{ units: number; name: string; address: string; manager: string; }' is not assignable to parameter of type 'Omit<Asset, "id" | "lastUpdated">'.
+  Type '{ units: number; name: string; address: string; manager: string; }' is missing the following properties from type 'Omit<Asset, "id" | "lastUpdated">': city, state, zip
+components/InstitutionalModule.tsx(128,15): error TS2739: Type '{ id: string; name: string; address: string; units: number; manager: string; lastUpdated: string; }' is missing the following properties from type 'Asset': city, state, zip
+components/MainAppView.tsx(191,322): error TS2345: Argument of type '(prev: Asset[]) => Omit<Asset, "id" | "lastUpdated">[]' is not assignable to parameter of type 'SetStateAction<Asset[]>'.
+  Type '(prev: Asset[]) => Omit<Asset, "id" | "lastUpdated">[]' is not assignable to type '(prevState: Asset[]) => Asset[]'.
+    Type 'Omit<Asset, "id" | "lastUpdated">[]' is not assignable to type 'Asset[]'.
+      Type 'Omit<Asset, "id" | "lastUpdated">' is missing the following properties from type 'Asset': id, lastUpdated
+components/MainAppView.tsx(192,697): error TS2345: Argument of type '(prev: Asset[]) => Omit<Asset, "id" | "lastUpdated">[]' is not assignable to parameter of type 'SetStateAction<Asset[]>'.
+  Type '(prev: Asset[]) => Omit<Asset, "id" | "lastUpdated">[]' is not assignable to type '(prevState: Asset[]) => Asset[]'.
+    Type 'Omit<Asset, "id" | "lastUpdated">[]' is not assignable to type 'Asset[]'.
+      Type 'Omit<Asset, "id" | "lastUpdated">' is missing the following properties from type 'Asset': id, lastUpdated
+constants.tsx(14,3): error TS2739: Type '{ id: string; name: string; address: string; units: number; manager: string; lastUpdated: string; }' is missing the following properties from type 'Asset': city, state, zip
+constants.tsx(15,3): error TS2739: Type '{ id: string; name: string; address: string; units: number; manager: string; lastUpdated: string; }' is missing the following properties from type 'Asset': city, state, zip
+constants.tsx(16,3): error TS2739: Type '{ id: string; name: string; address: string; units: number; manager: string; lastUpdated: string; }' is missing the following properties from type 'Asset': city, state, zip
+constants.tsx(17,3): error TS2739: Type '{ id: string; name: string; address: string; units: number; manager: string; lastUpdated: string; }' is missing the following properties from type 'Asset': city, state, zip
+constants.tsx(18,3): error TS2739: Type '{ id: string; name: string; address: string; units: number; manager: string; lastUpdated: string; }' is missing the following properties from type 'Asset': city, state, zip
+persistenceService.ts(84,44): error TS2739: Type '{ id: any; name: any; address: any; units: number; manager: any; lastUpdated: any; }' is missing the following properties from type 'Asset': city, state, zip

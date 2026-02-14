@@ -79,10 +79,31 @@ const mapDistressDetailToDB = (d: DistressDetail, userId: string) => ({
  * This ensures the exact PropControl logic remains untouched in the frontend.
  */
 const mapAssetToDB = (a: Asset, userId: string) => ({
-  id: a.id, user_id: userId, name: a.name, address: a.address, units: a.units, manager: a.manager, last_updated: a.lastUpdated
+  id: a.id,
+  user_id: userId,
+  name: a.name,
+  address: a.address,
+  city: a.city,
+  state: a.state,
+  zip: a.zip,
+  units: a.units,
+  manager: a.manager,
+  status: a.status,
+  property_type: a.propertyType,
+  last_updated: a.lastUpdated
 });
 const mapAssetFromDB = (a: any): Asset => ({
-  id: a.id, name: a.name || 'Unknown Asset', address: a.address || '', units: Number(a.units || 1), manager: a.manager || '', lastUpdated: a.last_updated || new Date().toISOString()
+  id: a.id,
+  name: a.name || 'Unknown Asset',
+  address: a.address || '',
+  city: a.city || '',
+  state: a.state || '',
+  zip: a.zip || '',
+  units: Number(a.units || 1),
+  manager: a.manager || '',
+  status: a.status || 'STABILIZED',
+  propertyType: a.property_type || 'MULTIFAMILY',
+  lastUpdated: a.last_updated || new Date().toISOString()
 });
 
 const mapTenantToDB = (t: Tenant, userId: string) => ({

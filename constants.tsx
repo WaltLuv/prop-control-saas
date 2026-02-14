@@ -11,11 +11,11 @@ export const BENCHMARKS: Benchmark[] = [
 ];
 
 export const INITIAL_ASSETS: Asset[] = [
-  { id: 'a1', name: 'Riverside Apartments', address: '123 River Rd, Austin, TX', units: 150, manager: 'Sarah Johnson', lastUpdated: '2023-11-20' },
-  { id: 'a2', name: 'Oakwood Heights', address: '456 Hill Ln, Dallas, TX', units: 85, manager: 'Mike Peters', lastUpdated: '2023-11-19' },
-  { id: 'a3', name: 'Pine View Villas', address: '789 Forest Dr, Houston, TX', units: 220, manager: 'Elena Rodriguez', lastUpdated: '2023-11-21' },
-  { id: 'a4', name: 'Cedar Ridge Lofts', address: '321 Cedar Blvd, Atlanta, GA', units: 45, manager: 'James Wilson', lastUpdated: '2023-11-18' },
-  { id: 'a5', name: 'Sunset Valley Townhomes', address: '555 Valley View, Phoenix, AZ', units: 110, manager: 'Patricia Moore', lastUpdated: '2023-11-17' }
+  { id: 'a1', name: 'Riverside Apartments', address: '123 River Rd', city: 'Austin', state: 'TX', zip: '78701', units: 150, manager: 'Sarah Johnson', lastUpdated: '2023-11-20', status: 'STABILIZED', propertyType: 'MULTIFAMILY' },
+  { id: 'a2', name: 'Oakwood Heights', address: '456 Hill Ln', city: 'Dallas', state: 'TX', zip: '75201', units: 85, manager: 'Mike Peters', lastUpdated: '2023-11-19', status: 'Please Stabilize', propertyType: 'MULTIFAMILY' },
+  { id: 'a3', name: 'Pine View Villas', address: '789 Forest Dr', city: 'Houston', state: 'TX', zip: '77001', units: 220, manager: 'Elena Rodriguez', lastUpdated: '2023-11-21', status: 'Value Add', propertyType: 'MULTIFAMILY' },
+  { id: 'a4', name: 'Cedar Ridge Lofts', address: '321 Cedar Blvd', city: 'Atlanta', state: 'GA', zip: '30301', units: 45, manager: 'James Wilson', lastUpdated: '2023-11-18', status: 'STABILIZED', propertyType: 'MULTIFAMILY' },
+  { id: 'a5', name: 'Sunset Valley Townhomes', address: '555 Valley View', city: 'Phoenix', state: 'AZ', zip: '85001', units: 110, manager: 'Patricia Moore', lastUpdated: '2023-11-17', status: 'STABILIZED', propertyType: 'MULTIFAMILY' }
 ];
 
 export const INITIAL_TENANTS: Tenant[] = [

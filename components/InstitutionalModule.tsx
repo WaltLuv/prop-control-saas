@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
     Activity,
     ShieldCheck,
@@ -129,9 +130,14 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
             id: `asset-${Date.now()}`,
             name: lead.propertyName || `${lead.propertyAddress} (Acquired)`,
             address: lead.propertyAddress,
+            city: lead.propertyAddress.split(',')[1]?.trim() || 'Unknown City',
+            state: lead.propertyAddress.split(',')[2]?.trim().split(' ')[0] || 'Unknown State',
+            zip: lead.propertyAddress.split(',')[2]?.trim().split(' ')[1] || '00000',
             units: 1,
             manager: 'Unassigned',
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
+            status: 'STABILIZED',
+            propertyType: 'SINGLE_FAMILY'
         };
         onUpdateAssets(prev => [newAsset, ...prev]);
         alert(`Successfully acquired ${lead.propertyAddress}! Added to Portfolio.`);
@@ -787,6 +793,12 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                                         >
                                                             <Mail className="w-3 h-3" /> Contact
                                                         </button>
+                                                        <Link
+                                                            to={`/properties/${lead.id}/financials`}
+                                                            className="px-3 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors flex items-center gap-1 shadow-md shadow-indigo-500/20"
+                                                        >
+                                                            <Activity className="w-3 h-3" /> Underwrite
+                                                        </Link>
                                                     </div>
                                                 </div>
 
@@ -813,63 +825,67 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                                 </div>
 
                                                 {/* Swarm Mission Pulse */}
-                                                {(lead.swarmStatus === KimiSwarmStatus.DEPLOYING || lead.swarmStatus === KimiSwarmStatus.RESEARCHING) && (
-                                                    <div className="py-2 px-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center gap-2 animate-pulse">
-                                                        <Users className="w-3 h-3 text-indigo-400" />
-                                                        <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">
-                                                            {lead.swarmStatus === KimiSwarmStatus.DEPLOYING ? 'Spawning 100 Agents...' : 'PARL Swarm Active: Finding Deals...'}
-                                                        </span>
-                                                    </div>
-                                                )}
+                                                {
+                                                    (lead.swarmStatus === KimiSwarmStatus.DEPLOYING || lead.swarmStatus === KimiSwarmStatus.RESEARCHING) && (
+                                                        <div className="py-2 px-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center gap-2 animate-pulse">
+                                                            <Users className="w-3 h-3 text-indigo-400" />
+                                                            <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">
+                                                                {lead.swarmStatus === KimiSwarmStatus.DEPLOYING ? 'Spawning 100 Agents...' : 'PARL Swarm Active: Finding Deals...'}
+                                                            </span>
+                                                        </div>
+                                                    )
+                                                }
 
                                                 {/* SWARM RESEARCH RESULTS - Shows after research completes */}
-                                                {lead.swarmStatus === KimiSwarmStatus.COMPLETED && lead.arv && (
-                                                    <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/30 rounded-2xl p-4 space-y-3 mb-4">
-                                                        <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-                                                            <Sparkles className="w-4 h-4 text-indigo-400" />
-                                                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Swarm Research Complete</span>
-                                                        </div>
+                                                {
+                                                    lead.swarmStatus === KimiSwarmStatus.COMPLETED && lead.arv && (
+                                                        <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/30 rounded-2xl p-4 space-y-3 mb-4">
+                                                            <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+                                                                <Sparkles className="w-4 h-4 text-indigo-400" />
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Swarm Research Complete</span>
+                                                            </div>
 
-                                                        {/* Key Metrics Grid */}
-                                                        <div className="grid grid-cols-3 gap-2">
-                                                            <div className="bg-white/5 rounded-xl p-2 text-center">
-                                                                <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">ARV</p>
-                                                                <p className="text-sm font-black text-emerald-400">${(lead.arv || 0).toLocaleString()}</p>
-                                                            </div>
-                                                            <div className="bg-white/5 rounded-xl p-2 text-center">
-                                                                <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">Est. Rehab</p>
-                                                                <p className="text-sm font-black text-amber-400">${(lead.estimatedRehabCost || 0).toLocaleString()}</p>
-                                                            </div>
-                                                            <div className="bg-white/5 rounded-xl p-2 text-center">
-                                                                <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">Profit</p>
-                                                                <p className="text-sm font-black text-emerald-400">${((lead.arv || 0) - (lead.totalLiabilities || 0) - (lead.estimatedRehabCost || 0)).toLocaleString()}</p>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Renovation Ideas */}
-                                                        {lead.renovationIdeas && lead.renovationIdeas.length > 0 && (
-                                                            <div className="space-y-1">
-                                                                <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Value-Add Opportunities</p>
-                                                                <div className="space-y-1">
-                                                                    {lead.renovationIdeas.slice(0, 3).map((idea, idx) => (
-                                                                        <div key={idx} className="flex items-center gap-2 text-[9px] text-slate-300">
-                                                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
-                                                                            {idea}
-                                                                        </div>
-                                                                    ))}
+                                                            {/* Key Metrics Grid */}
+                                                            <div className="grid grid-cols-3 gap-2">
+                                                                <div className="bg-white/5 rounded-xl p-2 text-center">
+                                                                    <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">ARV</p>
+                                                                    <p className="text-sm font-black text-emerald-400">${(lead.arv || 0).toLocaleString()}</p>
+                                                                </div>
+                                                                <div className="bg-white/5 rounded-xl p-2 text-center">
+                                                                    <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">Est. Rehab</p>
+                                                                    <p className="text-sm font-black text-amber-400">${(lead.estimatedRehabCost || 0).toLocaleString()}</p>
+                                                                </div>
+                                                                <div className="bg-white/5 rounded-xl p-2 text-center">
+                                                                    <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">Profit</p>
+                                                                    <p className="text-sm font-black text-emerald-400">${((lead.arv || 0) - (lead.totalLiabilities || 0) - (lead.estimatedRehabCost || 0)).toLocaleString()}</p>
                                                                 </div>
                                                             </div>
-                                                        )}
 
-                                                        {/* Research Notes */}
-                                                        {lead.swarmResearchNotes && (
-                                                            <div className="bg-white/5 rounded-xl p-2">
-                                                                <p className="text-[8px] font-black uppercase tracking-widest text-slate-500 mb-1">Intel Report</p>
-                                                                <p className="text-[9px] text-slate-400 leading-relaxed">{lead.swarmResearchNotes}</p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
+                                                            {/* Renovation Ideas */}
+                                                            {lead.renovationIdeas && lead.renovationIdeas.length > 0 && (
+                                                                <div className="space-y-1">
+                                                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Value-Add Opportunities</p>
+                                                                    <div className="space-y-1">
+                                                                        {lead.renovationIdeas.slice(0, 3).map((idea, idx) => (
+                                                                            <div key={idx} className="flex items-center gap-2 text-[9px] text-slate-300">
+                                                                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                                                                                {idea}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Research Notes */}
+                                                            {lead.swarmResearchNotes && (
+                                                                <div className="bg-white/5 rounded-xl p-2">
+                                                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500 mb-1">Intel Report</p>
+                                                                    <p className="text-[9px] text-slate-400 leading-relaxed">{lead.swarmResearchNotes}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                }
 
 
                                                 <div className="grid grid-cols-2 gap-3">
@@ -1004,8 +1020,9 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                 </div>
                             )}
                         </div>
-                    )}
-                </div>
+                    )
+                    }
+                </div >
             ) : viewMode === 'underwriting' ? (
                 <div className="space-y-8 animate-in slide-in-from-right-8 duration-500 pb-20">
                     {/* Header Action Bar */}
@@ -1316,92 +1333,94 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
             )}
 
             {/* Contact Owner Modal */}
-            {isContactModalOpen && selectedLeadId && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-slate-900 rounded-[2rem] max-w-2xl w-full border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                        <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/5">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
-                                    <Mail className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-white tracking-tight">Owner Outreach</h3>
-                                    <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest">
-                                        AI Negotiator Active
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setIsContactModalOpen(false)}
-                                className="p-2 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-white"
-                            >
-                                <Users className="w-5 h-5 rotate-45" />
-                            </button>
-                        </div>
-
-                        <div className="p-8 space-y-6">
-                            {isDrafting ? (
-                                <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
-                                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-                                    <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 animate-pulse">
-                                        Generative AI Drafting Inquiry...
-                                    </p>
-                                </div>
-                            ) : contactStatus === 'sent' ? (
-                                <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
-                                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-2 animate-in zoom-in duration-300">
-                                        <FileCheck className="w-8 h-8 text-white" />
+            {
+                isContactModalOpen && selectedLeadId && (
+                    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div className="bg-slate-900 rounded-[2rem] max-w-2xl w-full border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                            <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/5">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
+                                        <Mail className="w-6 h-6 text-white" />
                                     </div>
-                                    <h4 className="text-2xl font-black text-white">Sent Successfully!</h4>
-                                    <p className="text-slate-400">Owner has been contacted via verified email channel.</p>
+                                    <div>
+                                        <h3 className="text-xl font-black text-white tracking-tight">Owner Outreach</h3>
+                                        <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest">
+                                            AI Negotiator Active
+                                        </p>
+                                    </div>
                                 </div>
-                            ) : (
-                                <>
-                                    <div className="bg-slate-950 rounded-xl p-4 border border-white/5 space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Subject</label>
-                                        <input
-                                            readOnly
-                                            value={`Inquiry regarding property at ${leads.find(l => l.id === selectedLeadId)?.propertyAddress}`}
-                                            className="w-full bg-transparent text-white font-bold text-sm outline-none border-b border-slate-800 pb-2 focus:border-indigo-500 transition-colors"
-                                        />
-                                    </div>
-                                    <div className="bg-slate-950 rounded-xl p-4 border border-white/5 space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex justify-between">
-                                            <span>AI Drafted Message</span>
-                                            <span className="text-slate-600">Model: Gemini 1.5 Flash</span>
-                                        </label>
-                                        <textarea
-                                            value={emailDraft}
-                                            onChange={(e) => setEmailDraft(e.target.value)}
-                                            className="w-full h-64 bg-transparent text-slate-300 font-medium text-sm leading-relaxed outline-none resize-none custom-scrollbar"
-                                        />
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        {contactStatus !== 'sent' && !isDrafting && (
-                            <div className="p-6 bg-slate-950 border-t border-white/5 flex justify-end gap-3">
                                 <button
                                     onClick={() => setIsContactModalOpen(false)}
-                                    className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                                    className="p-2 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-white"
                                 >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={sendInquiry}
-                                    disabled={contactStatus === 'sending'}
-                                    className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2"
-                                >
-                                    {contactStatus === 'sending' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                                    Send Message
+                                    <Users className="w-5 h-5 rotate-45" />
                                 </button>
                             </div>
-                        )}
+
+                            <div className="p-8 space-y-6">
+                                {isDrafting ? (
+                                    <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
+                                        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
+                                        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 animate-pulse">
+                                            Generative AI Drafting Inquiry...
+                                        </p>
+                                    </div>
+                                ) : contactStatus === 'sent' ? (
+                                    <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
+                                        <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-2 animate-in zoom-in duration-300">
+                                            <FileCheck className="w-8 h-8 text-white" />
+                                        </div>
+                                        <h4 className="text-2xl font-black text-white">Sent Successfully!</h4>
+                                        <p className="text-slate-400">Owner has been contacted via verified email channel.</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="bg-slate-950 rounded-xl p-4 border border-white/5 space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Subject</label>
+                                            <input
+                                                readOnly
+                                                value={`Inquiry regarding property at ${leads.find(l => l.id === selectedLeadId)?.propertyAddress}`}
+                                                className="w-full bg-transparent text-white font-bold text-sm outline-none border-b border-slate-800 pb-2 focus:border-indigo-500 transition-colors"
+                                            />
+                                        </div>
+                                        <div className="bg-slate-950 rounded-xl p-4 border border-white/5 space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex justify-between">
+                                                <span>AI Drafted Message</span>
+                                                <span className="text-slate-600">Model: Gemini 1.5 Flash</span>
+                                            </label>
+                                            <textarea
+                                                value={emailDraft}
+                                                onChange={(e) => setEmailDraft(e.target.value)}
+                                                className="w-full h-64 bg-transparent text-slate-300 font-medium text-sm leading-relaxed outline-none resize-none custom-scrollbar"
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {contactStatus !== 'sent' && !isDrafting && (
+                                <div className="p-6 bg-slate-950 border-t border-white/5 flex justify-end gap-3">
+                                    <button
+                                        onClick={() => setIsContactModalOpen(false)}
+                                        className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={sendInquiry}
+                                        disabled={contactStatus === 'sending'}
+                                        className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2"
+                                    >
+                                        {contactStatus === 'sending' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                                        Send Message
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

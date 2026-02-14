@@ -1,15 +1,16 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Asset, KPIEntry, AssetHealth, KPIStatus, KPIName, Benchmark } from '../types';
 import { BENCHMARKS } from '../constants';
-import { 
-  ChevronLeft, 
-  BrainCircuit, 
-  Activity, 
-  TrendingUp, 
-  Calendar, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  ChevronLeft,
+  BrainCircuit,
+  Activity,
+  TrendingUp,
+  Calendar,
+  AlertCircle,
+  CheckCircle2,
   AlertTriangle,
   History,
   Scale,
@@ -37,7 +38,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ asset, kpiEntries, health, on
   const [aiInsight, setAiInsight] = useState<string>('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   const fetchInsight = async () => {
     setIsSyncing(true);
     const latestMetrics = kpiEntries.slice(0, 10).map(e => ({ name: e.kpiName, value: e.value, date: e.date }));
@@ -94,7 +95,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ asset, kpiEntries, health, on
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <button 
+        <button
           onClick={onBack}
           className="flex items-center gap-3 text-slate-400 hover:text-indigo-600 font-black uppercase tracking-[0.2em] text-[11px] transition-all group"
         >
@@ -104,13 +105,19 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ asset, kpiEntries, health, on
           Back to Portfolio
         </button>
         <div className="flex gap-3">
-          <button 
+          <Link
+            to={`/properties/${asset.id}`}
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+          >
+            <Activity className="w-3.5 h-3.5" /> Open Pro Workspace
+          </Link>
+          <button
             onClick={() => setIsEditModalOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 bg-white text-indigo-600 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-sm border border-indigo-100 hover:bg-indigo-50 transition-all active:scale-95"
           >
             <Edit2 className="w-3.5 h-3.5" /> Edit Asset
           </button>
-          <button 
+          <button
             onClick={onDelete}
             className="flex items-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-600 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-100 transition-all active:scale-95"
           >
@@ -121,28 +128,27 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ asset, kpiEntries, health, on
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          
+
           <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100 relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
-               <Activity className="w-64 h-64" />
-             </div>
+            <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
+              <Activity className="w-64 h-64" />
+            </div>
             <div className="relative z-10">
               <div className="flex flex-col justify-between items-start gap-8">
                 <div className="w-full">
                   <div className="flex flex-wrap items-center gap-4 mb-3">
                     <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter">{asset.name}</h2>
-                    <div className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm ${
-                      health.statusBand === KPIStatus.GREEN ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' :
+                    <div className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm ${health.statusBand === KPIStatus.GREEN ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' :
                       health.statusBand === KPIStatus.YELLOW ? 'bg-amber-50 text-amber-700 border border-amber-100' :
-                      'bg-rose-50 text-rose-700 border border-rose-100'
-                    }`}>
+                        'bg-rose-50 text-rose-700 border border-rose-100'
+                      }`}>
                       {health.statusBand}
                     </div>
                   </div>
                   <p className="text-slate-400 font-bold flex items-center gap-2 text-sm uppercase tracking-widest">
                     <Activity className="w-4 h-4 text-indigo-400" /> {asset.address}
                   </p>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-10 pt-10 border-t border-slate-50">
                     <div>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Units in Portfolio</p>
@@ -171,9 +177,9 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ asset, kpiEntries, health, on
                 <span className="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-[0.2em]">Baseline</span>
                 <span className="text-3xl font-black text-slate-900 tracking-tighter">100</span>
               </div>
-              
+
               <div className="text-slate-200 text-3xl font-light">−</div>
-              
+
               <div className={`flex flex-col items-center p-6 rounded-3xl min-w-[120px] md:min-w-[150px] border transition-all ${health.redCount > 0 ? 'bg-rose-50 text-rose-700 border-rose-100 shadow-sm' : 'bg-slate-50 text-slate-300 opacity-30 border-slate-100 shadow-inner'}`}>
                 <span className="text-[10px] font-black uppercase mb-2 tracking-[0.2em]">Red Breach</span>
                 <span className="text-3xl font-black tracking-tighter">{health.redCount * 15}</span>
@@ -192,7 +198,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ asset, kpiEntries, health, on
 
               <div className="flex flex-col items-center p-7 bg-indigo-600 text-white rounded-[2.5rem] min-w-[140px] md:min-w-[180px] shadow-2xl shadow-indigo-200 relative overflow-hidden transition-transform hover:scale-105 duration-300">
                 <div className="absolute top-0 right-0 p-5 opacity-20">
-                   <Activity className="w-14 h-14" />
+                  <Activity className="w-14 h-14" />
                 </div>
                 <span className="text-[10px] font-black uppercase mb-2 tracking-[0.2em] opacity-80">Property Health Score</span>
                 <span className="text-4xl md:text-5xl font-black tracking-tighter">{health.healthScore}</span>
@@ -223,35 +229,35 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ asset, kpiEntries, health, on
                         <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mt-0.5">Last Log</p>
                       </div>
                     </div>
-                    
+
                     <div className="h-44 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis 
-                            dataKey="date" 
-                            axisLine={false} 
-                            tickLine={false} 
+                          <XAxis
+                            dataKey="date"
+                            axisLine={false}
+                            tickLine={false}
                             tick={{ fontSize: 10, fill: '#cbd5e1', fontWeight: 700 }}
                             dy={10}
                           />
-                          <YAxis 
-                            hide 
+                          <YAxis
+                            hide
                             domain={['auto', 'auto']}
                           />
-                          <Tooltip 
+                          <Tooltip
                             contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', fontSize: '11px', fontWeight: 800, padding: '12px' }}
                             formatter={(value: any, name: any, props: any) => [
-                              formatValue(props.payload.originalValue, benchmark.unit), 
+                              formatValue(props.payload.originalValue, benchmark.unit),
                               benchmark.name
                             ]}
                           />
-                          <Line 
-                            type="monotone" 
-                            dataKey="displayValue" 
-                            stroke="#6366f1" 
-                            strokeWidth={4} 
-                            dot={{ fill: '#6366f1', r: 5, strokeWidth: 3, stroke: '#fff' }} 
+                          <Line
+                            type="monotone"
+                            dataKey="displayValue"
+                            stroke="#6366f1"
+                            strokeWidth={4}
+                            dot={{ fill: '#6366f1', r: 5, strokeWidth: 3, stroke: '#fff' }}
                             activeDot={{ r: 7, strokeWidth: 0, fill: '#4338ca' }}
                           />
                         </LineChart>
@@ -277,7 +283,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ asset, kpiEntries, health, on
                   </div>
                   <h3 className="text-xl font-black uppercase tracking-tight">AI Asset Audit</h3>
                 </div>
-                <button 
+                <button
                   onClick={fetchInsight}
                   disabled={isSyncing}
                   className="p-2.5 hover:bg-white/10 rounded-2xl transition-all active:scale-90 disabled:opacity-30 border border-white/10"
@@ -303,8 +309,8 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ asset, kpiEntries, health, on
               <div className="pt-8 mt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <span className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em]">Gemini Intelligence v3.1</span>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl self-start sm:self-auto">
-                   <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
-                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Verified Analysis</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Verified Analysis</span>
                 </div>
               </div>
             </div>

@@ -110,9 +110,18 @@ export interface Asset {
   id: string;
   name: string;
   address: string;
+  city: string;
+  state: string;
+  zip: string;
   units: number;
   manager: string;
   lastUpdated: string;
+  // Extended fields for Analysis
+  beds?: number;
+  baths?: number;
+  sqft?: number;
+  status?: string;
+  propertyType?: string; // 'Single Family', 'Multi-Family', etc.
 }
 
 export interface KPIEntry {
