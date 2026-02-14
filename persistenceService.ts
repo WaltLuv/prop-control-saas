@@ -79,10 +79,31 @@ const mapDistressDetailToDB = (d: DistressDetail, userId: string) => ({
  * This ensures the exact PropControl logic remains untouched in the frontend.
  */
 const mapAssetToDB = (a: Asset, userId: string) => ({
-  id: a.id, user_id: userId, name: a.name, address: a.address, units: a.units, manager: a.manager, last_updated: a.lastUpdated
+  id: a.id,
+  user_id: userId,
+  name: a.name,
+  address: a.address,
+  city: a.city,
+  state: a.state,
+  zip: a.zip,
+  units: a.units,
+  manager: a.manager,
+  status: a.status,
+  property_type: a.propertyType,
+  last_updated: a.lastUpdated
 });
 const mapAssetFromDB = (a: any): Asset => ({
-  id: a.id, name: a.name || 'Unknown Asset', address: a.address || '', units: Number(a.units || 1), manager: a.manager || '', lastUpdated: a.last_updated || new Date().toISOString()
+  id: a.id,
+  name: a.name || 'Unknown Asset',
+  address: a.address || '',
+  city: a.city || '',
+  state: a.state || '',
+  zip: a.zip || '',
+  units: Number(a.units || 1),
+  manager: a.manager || '',
+  status: a.status || 'STABILIZED',
+  propertyType: a.property_type || 'MULTIFAMILY',
+  lastUpdated: a.last_updated || new Date().toISOString()
 });
 
 const mapTenantToDB = (t: Tenant, userId: string) => ({
@@ -161,16 +182,32 @@ export const fetchPortfolioData = async (): Promise<PersistentState | null> => {
     // Default subscription status to 'active' if plan is FREE, otherwise check DB
     const dbStatus = profile.data?.subscription_status || (dbPlan === 'FREE' ? 'active' : 'inactive');
 
+
+    // Trial Logic: Check if within 7 days of trial_start (or creation if null for new users)
+    const now = new Date();
+    const trialStart = profile.data?.trial_start ? new Date(profile.data.trial_start) : null;
+    const trialEnd = profile.data?.trial_end ? new Date(profile.data.trial_end) : (
+      // Fallback: if no trial_end but created_at is within 7 days, treat as trial
+      profile.data?.created_at && (now.getTime() - new Date(profile.data.created_at).getTime() < 7 * 24 * 60 * 60 * 1000)
+        ? new Date(new Date(profile.data.created_at).getTime() + 7 * 24 * 60 * 60 * 1000)
+        : null
+    );
+
+    const isTrialActive = trialEnd && now < trialEnd;
+
+    // Override plan if trial is active
+    const effectivePlan = isSuperUser ? 'PRO_MAX' : (isTrialActive ? 'PRO_MAX' : (dbPlan as any));
+
     const userProfile: UserProfile = {
       id: profile.data?.id || user.id,
       email: profile.data?.email || user.email!,
-      plan: isSuperUser ? 'PRO_MAX' : dbPlan as any,
+      plan: effectivePlan,
       stripeCustomerId: profile.data?.stripe_customer_id,
-      subscriptionStatus: isSuperUser ? 'active' : dbStatus
+      subscriptionStatus: isSuperUser ? 'active' : dbStatus,
+      usageMetadata: profile.data?.usage_metadata || {},
+      trialStart: trialStart?.toISOString(),
+      trialEnd: trialEnd?.toISOString()
     };
-
-    // If fetching failed, or data is empty, return defaults or empty
-    // NOTE: If new user, this returns empty arrays, which is correct.
 
     return {
       userProfile,
@@ -273,3 +310,33 @@ export const updateSwarmStatus = async (leadId: string, status: string) => {
 
   if (error) throw error;
 };
+
+/**
+ * Increments the usage count for a specific feature.
+ */
+export const incrementUsage = async (userId: string, featureKey: string) => {
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('usage_metadata')
+    .eq('id', userId)
+    .single();
+
+  if (fetchError || !profile) return;
+
+  const currentUsage = profile.usage_metadata || {};
+  const currentCount = (currentUsage as any)[featureKey] || 0;
+
+  const newUsage = {
+    ...currentUsage,
+    [featureKey]: currentCount + 1,
+    last_updated: new Date().toISOString()
+  };
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ usage_metadata: newUsage })
+    .eq('id', userId);
+
+  if (updateError) console.error("Failed to update usage metadata", updateError);
+};
+

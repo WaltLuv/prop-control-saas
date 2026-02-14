@@ -63,7 +63,7 @@ export const LeadMap: React.FC<LeadMapProps> = ({ leads, onSelectLead }) => {
                                         onClick={() => onSelectLead(lead)}
                                         className="w-full py-2 bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-800 transition-colors"
                                     >
-                                        Underwrite Lead
+                                        Analyze Lead
                                     </button>
                                 </div>
                             </Popup>

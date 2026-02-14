@@ -22,13 +22,13 @@ const PLANS = {
     },
     PRO: {
         stripePriceIds: {
-            monthly: 'price_1SuMnMKrduQQtKdTNtGJmhtq',
+            monthly: 'price_1T0DtYKrduQQtKdTEUIxM1cM',
             annual: 'price_1SuMkWKrduQQtKdT51Fxui5e',
         }
     },
     PRO_MAX: {
         stripePriceIds: {
-            monthly: 'price_1SwVpQKrduQQtKdTtWPT4DSL',
+            monthly: 'price_1T0DqzKrduQQtKdTkl1cgzAC',
             annual: '', // Add annual if available
         }
     }

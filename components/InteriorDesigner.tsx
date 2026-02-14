@@ -379,7 +379,12 @@ Overall: ultra-clean, magazine-quality render with balanced contrast, soft natur
 }
 
 // --- MAIN COMPONENT ---
-const InteriorDesigner: React.FC = () => {
+interface InteriorDesignerProps {
+  userProfile?: any; // Pass user profile to check usage
+  onIncrementUsage?: () => void; // Callback to update usage in parent state if needed
+}
+
+const InteriorDesigner: React.FC<InteriorDesignerProps> = ({ userProfile, onIncrementUsage }) => {
   // Theme state for inner logic
   const [theme, setTheme] = useState("light");
 
@@ -391,6 +396,7 @@ const InteriorDesigner: React.FC = () => {
   const [roomType, setRoomType] = useState("Living Room");
   const [furnitureStyle, setFurnitureStyle] = useState("Modern");
   const [wallColor, setWallColor] = useState("Warm White");
+  const [customColor, setCustomColor] = useState("");
   const [flooring, setFlooring] = useState("Light Wood");
   const [curtains, setCurtains] = useState("Sheer White");
   const [decorItems, setDecorItems] = useState<string[]>(["Indoor Plants"]);
@@ -428,6 +434,17 @@ const InteriorDesigner: React.FC = () => {
     e.preventDefault();
     if (isLoading || images.length === 0) return;
 
+    // --- USAGE CAP ENFORCEMENT ---
+    const isPro = userProfile?.plan === 'PRO';
+    if (isPro) {
+      const usage = userProfile.usageMetadata?.visual_sow_generated_count || 0;
+      if (usage >= 50) {
+        alert("You have reached your limit of 50 Visual SOW generations per month. Please upgrade to PRO MAX for unlimited access.");
+        return;
+      }
+    }
+    // -----------------------------
+
     setIsLoading(true);
     setError(null);
     setHasSubmitted(true);
@@ -437,10 +454,12 @@ const InteriorDesigner: React.FC = () => {
       resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
 
+    const activeWallColor = customColor || wallColor;
+
     const prompt = buildInteriorPrompt({
       roomType,
       furnitureStyle,
-      wallColor,
+      wallColor: activeWallColor,
       flooring,
       curtains,
       decorList: decorItems,
@@ -453,6 +472,10 @@ const InteriorDesigner: React.FC = () => {
     try {
       const result = await generateInteriorDesign(images, prompt);
       setEditedImageResult(result);
+
+      // Increment Usage
+      if (onIncrementUsage) onIncrementUsage();
+
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again shortly.");
@@ -564,7 +587,7 @@ const InteriorDesigner: React.FC = () => {
 
               <div>
                 <SectionTitle>3) Wall Color</SectionTitle>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3 mb-3">
                   {[
                     { key: "Warm White", color: "#F7F5F2" },
                     { key: "Cool Grey", color: "#D4D8DD" },
@@ -573,8 +596,26 @@ const InteriorDesigner: React.FC = () => {
                     { key: "Sand Beige", color: "#D9C7A4" },
                     { key: "Charcoal", color: "#2E2F34" },
                   ].map(s => (
-                    <Swatch key={s.key} label={s.key} color={s.color} active={wallColor === s.key} onClick={() => setWallColor(s.key)} disabled={isLoading} />
+                    <Swatch key={s.key} label={s.key} color={s.color} active={wallColor === s.key} onClick={() => { setWallColor(s.key); setCustomColor(""); }} disabled={isLoading} />
                   ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Custom Color (e.g. #FF5733 or 'Dusty Rose')"
+                      value={customColor}
+                      onChange={(e) => {
+                        setCustomColor(e.target.value);
+                        if (e.target.value) setWallColor("Custom");
+                      }}
+                      disabled={isLoading}
+                      className="w-full px-3 py-2 text-sm rounded-lg glass border border-[rgba(var(--border-rgb),0.7)] outline-none focus:ring-2 focus:ring-white/40 text-[var(--text-strong)] placeholder:text-[var(--text-soft)]"
+                    />
+                  </div>
+                  {customColor && (
+                    <div className="w-10 h-10 rounded-lg border border-[rgba(var(--border-rgb),0.7)] shadow-sm" style={{ background: customColor }} />
+                  )}
                 </div>
               </div>
 
@@ -644,7 +685,7 @@ const InteriorDesigner: React.FC = () => {
                 </div>
               </div>
 
-              <form onSubmit={onSubmit}>
+              <form onSubmit={onSubmit} className="space-y-4">
                 <button
                   type="submit"
                   disabled={isLoading || images.length === 0}
@@ -655,6 +696,23 @@ const InteriorDesigner: React.FC = () => {
                 >
                   {isLoading ? "Generating..." : "Transform Image"}
                 </button>
+
+                {hasSubmitted && !isLoading && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHasSubmitted(false);
+                      setEditedImageResult(null);
+                      setImages([]);
+                      if (imagePreview) URL.revokeObjectURL(imagePreview);
+                      setImagePreview(null);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="w-full px-5 py-3 rounded-xl font-bold border border-[rgba(var(--border-rgb),0.6)] text-[var(--text-strong)] hover:bg-white/10 active:scale-95 transition"
+                  >
+                    Start Over / New Image
+                  </button>
+                )}
               </form>
             </div>
           </aside>

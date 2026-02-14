@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
     Activity,
     ShieldCheck,
@@ -89,7 +90,7 @@ const PropertyPhoto: React.FC<{ address: string }> = ({ address }) => {
     // In a real app, this would use a restricted Google API Key from env/secrets
     // Using a public proxy or placeholder logic for this demo
     const encodedAddress = encodeURIComponent(address);
-    const photoUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${encodedAddress}&fov=90&heading=235&pitch=10&key=demo_key`;
+    const photoUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${encodedAddress}&fov=90&heading=235&pitch=10&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
 
     return (
         <div className="w-full h-full bg-slate-800 relative overflow-hidden group-hover:scale-110 transition-transform duration-[2000ms]">
@@ -118,8 +119,8 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
     assets,
     onUpdateAssets
 }) => {
-    // Mode toggle between Sourcing, Underwriting and Mission Control
-    const [viewMode, setViewMode] = useState<'sourcing' | 'underwriting' | 'settings'>('sourcing');
+    // Mode toggle between Sourcing, Underwriting, Mission Control, and Get Appraisal
+    const [viewMode, setViewMode] = useState<'sourcing' | 'underwriting' | 'settings' | 'appraisal'>('sourcing');
 
     // --- REALTIME SWARM FEED ---
     // Removed simulation interval. Leads are now static until user triggers action or manually refreshes.
@@ -129,9 +130,14 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
             id: `asset-${Date.now()}`,
             name: lead.propertyName || `${lead.propertyAddress} (Acquired)`,
             address: lead.propertyAddress,
+            city: lead.propertyAddress.split(',')[1]?.trim() || 'Unknown City',
+            state: lead.propertyAddress.split(',')[2]?.trim().split(' ')[0] || 'Unknown State',
+            zip: lead.propertyAddress.split(',')[2]?.trim().split(' ')[1] || '00000',
             units: 1,
             manager: 'Unassigned',
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
+            status: 'STABILIZED',
+            propertyType: 'SINGLE_FAMILY'
         };
         onUpdateAssets(prev => [newAsset, ...prev]);
         alert(`Successfully acquired ${lead.propertyAddress}! Added to Portfolio.`);
@@ -167,6 +173,47 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
     const [emailDraft, setEmailDraft] = useState('');
     const [isDrafting, setIsDrafting] = useState(false);
     const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+
+    // Appraisal State
+    const [appraisalAddress, setAppraisalAddress] = useState('');
+    const [appraisalResult, setAppraisalResult] = useState<any>(null);
+    const [isAppraising, setIsAppraising] = useState(false);
+
+    const handleGetAppraisal = async () => {
+        if (!appraisalAddress) return;
+        setIsAppraising(true);
+        setAppraisalResult(null);
+
+        try {
+            const { data, error } = await supabase.functions.invoke('appraisal-bundle', {
+                body: {
+                    address: appraisalAddress,
+                    propertyId: 'temp-id'
+                }
+            });
+
+            if (error) throw error;
+            setAppraisalResult(data);
+        } catch (err: any) {
+            console.error('Appraisal failed:', err);
+            let msg = 'Unknown error occurred';
+
+            if (err.context && typeof err.context.json === 'function') {
+                try {
+                    const body = await err.context.json();
+                    msg = body.error || body.message || msg;
+                } catch (e) {
+                    console.error('Failed to parse error body:', e);
+                }
+            } else if (err.message) {
+                msg = err.message;
+            }
+
+            alert(`Appraisal failed: ${msg}. \n\nNote: If this is a 401 error, your RENTCAST_API_KEY is invalid. If it's a 400 error, please check Supabase logs.`);
+        } finally {
+            setIsAppraising(false);
+        }
+    };
 
     // Telemetry State
     const [swarmLogs, setSwarmLogs] = useState<string[]>([]);
@@ -433,8 +480,10 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
     };
 
     const handleContactOwner = async (lead: InvestmentLead) => {
-        // Validation removed for testing
-        // if (!lead.ownerPhone && !lead.ownerEmail) ...
+        if (!lead.ownerPhone && !lead.ownerEmail) {
+            alert("No contact info available for this lead.");
+            return;
+        }
 
         setSelectedLeadId(lead.id);
         setIsContactModalOpen(true);
@@ -483,7 +532,8 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                         Investment Ideas <span className="text-slate-300">/</span> {
                             viewMode === 'sourcing' ? 'Discovery' :
                                 viewMode === 'underwriting' ? 'Underwriting' :
-                                    'Mission Control'
+                                    viewMode === 'appraisal' ? 'Get Appraisal' :
+                                        'Mission Control'
                         }
                     </h1>
                 </div>
@@ -513,11 +563,88 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                         >
                             Mission Control
                         </button>
+                        <button
+                            onClick={() => setViewMode('appraisal')}
+                            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'appraisal' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                        >
+                            Get Appraisal
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {viewMode === 'sourcing' ? (
+            {viewMode === 'appraisal' ? (
+                <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 min-h-[500px]">
+                    <div className="max-w-2xl mx-auto text-center mb-10">
+                        <h2 className="text-2xl font-black text-slate-900 mb-2">Instant Valuation</h2>
+                        <p className="text-slate-500">Enter any address to generate a comprehensive automated valuation report.</p>
+                    </div>
+
+                    <div className="max-w-xl mx-auto space-y-6">
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Enter full property address..."
+                                value={appraisalAddress}
+                                onChange={(e) => setAppraisalAddress(e.target.value)}
+                                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 transition-all text-lg"
+                            />
+                        </div>
+
+                        <button
+                            onClick={handleGetAppraisal}
+                            disabled={!appraisalAddress || isAppraising}
+                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isAppraising ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" /> Running Valuation Algorithm...
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="w-5 h-5" /> Run Valuation
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {appraisalResult && (
+                        <div className="max-w-4xl mx-auto mt-12 animate-in slide-in-from-bottom-4 duration-700">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <KPICard
+                                    title="Est. Market Value"
+                                    value={`$${appraisalResult.price?.toLocaleString() || 'N/A'}`}
+                                    subValue="Based on AVM"
+                                    icon={DollarSign}
+                                    colorClass={{ bg: 'bg-emerald-100', text: 'text-emerald-600' }}
+                                />
+                                <KPICard
+                                    title="Confidence Score"
+                                    value="High"
+                                    subValue="Algorithm Confidence"
+                                    icon={Target}
+                                    colorClass={{ bg: 'bg-blue-100', text: 'text-blue-600' }}
+                                />
+                                <KPICard
+                                    title="Rent Estimate"
+                                    value={`$${appraisalResult.rent?.toLocaleString() || 'N/A'}`}
+                                    subValue="/ month"
+                                    icon={Coins}
+                                    colorClass={{ bg: 'bg-purple-100', text: 'text-purple-600' }}
+                                />
+                            </div>
+
+                            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-4">Property Details</h3>
+                                <pre className="text-xs text-slate-600 overflow-auto max-h-60">
+                                    {JSON.stringify(appraisalResult, null, 2)}
+                                </pre>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : viewMode === 'sourcing' ? (
                 <div className="space-y-8">
                     {/* Strategic Workspace Header */}
                     <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">
@@ -684,23 +811,37 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
 
                                                 {/* Priority Badge */}
                                                 {isHotLead && (
-                                                    <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.5)] border border-emerald-400 z-20 animate-pulse">
-                                                        Alpha Target
+                                                    <div className="absolute top-4 left-4 bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-2 animate-pulse">
+                                                        <ShieldAlert className="w-3 h-3" />
+                                                        Priority
                                                     </div>
                                                 )}
 
-                                                <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                                                    <span className="px-3 py-1 bg-slate-950/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-lg border border-white/10">{lead.distressIndicator}</span>
+                                                <div className="absolute top-4 right-4 flex flex-col gap-2">
+                                                    <div className="bg-slate-900/90 backdrop-blur-md text-slate-300 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-white/10 shadow-lg">
+                                                        {lead.distressIndicator}
+                                                    </div>
                                                 </div>
 
-                                                {lead.conditionScore && (
-                                                    <div className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-lg">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className={`w-1.5 h-1.5 rounded-full ${lead.conditionScore < 5 ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'}`} />
-                                                            <span className="text-[10px] font-black text-white uppercase tracking-widest">Score: {lead.conditionScore}/10</span>
-                                                        </div>
+                                                {/* Swarm Status Indicator */}
+                                                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
+                                                        <div className={`w-2 h-2 rounded-full ${lead.swarmStatus === KimiSwarmStatus.COMPLETED ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
+                                                            lead.swarmStatus === KimiSwarmStatus.RESEARCHING ? 'bg-amber-400 animate-pulse' :
+                                                                lead.swarmStatus === KimiSwarmStatus.DEPLOYING ? 'bg-blue-400 animate-ping' :
+                                                                    'bg-slate-500'
+                                                            }`} />
+                                                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">
+                                                            {lead.swarmStatus || 'Swarm Ready'}
+                                                        </span>
                                                     </div>
-                                                )}
+                                                    {lead.conditionScore && (
+                                                        <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2">
+                                                            <div className={`w-1.5 h-1.5 rounded-full ${lead.conditionScore < 5 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                                                            <span className="text-[9px] font-black text-white uppercase tracking-widest">{lead.conditionScore}/10</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <div className="p-8 flex-1 flex flex-col justify-between relative z-10 bg-gradient-to-b from-transparent to-slate-950/50">
@@ -787,6 +928,12 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                                         >
                                                             <Mail className="w-3 h-3" /> Contact
                                                         </button>
+                                                        <Link
+                                                            to={`/properties/${lead.id}/financials`}
+                                                            className="px-3 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors flex items-center gap-1 shadow-md shadow-indigo-500/20"
+                                                        >
+                                                            <Activity className="w-3 h-3" /> Get ARV
+                                                        </Link>
                                                     </div>
                                                 </div>
 
@@ -813,63 +960,67 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                                 </div>
 
                                                 {/* Swarm Mission Pulse */}
-                                                {(lead.swarmStatus === KimiSwarmStatus.DEPLOYING || lead.swarmStatus === KimiSwarmStatus.RESEARCHING) && (
-                                                    <div className="py-2 px-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center gap-2 animate-pulse">
-                                                        <Users className="w-3 h-3 text-indigo-400" />
-                                                        <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">
-                                                            {lead.swarmStatus === KimiSwarmStatus.DEPLOYING ? 'Spawning 100 Agents...' : 'PARL Swarm Active: Finding Deals...'}
-                                                        </span>
-                                                    </div>
-                                                )}
+                                                {
+                                                    (lead.swarmStatus === KimiSwarmStatus.DEPLOYING || lead.swarmStatus === KimiSwarmStatus.RESEARCHING) && (
+                                                        <div className="py-2 px-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center gap-2 animate-pulse">
+                                                            <Users className="w-3 h-3 text-indigo-400" />
+                                                            <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">
+                                                                {lead.swarmStatus === KimiSwarmStatus.DEPLOYING ? 'Spawning 100 Agents...' : 'PARL Swarm Active: Finding Deals...'}
+                                                            </span>
+                                                        </div>
+                                                    )
+                                                }
 
                                                 {/* SWARM RESEARCH RESULTS - Shows after research completes */}
-                                                {lead.swarmStatus === KimiSwarmStatus.COMPLETED && lead.arv && (
-                                                    <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/30 rounded-2xl p-4 space-y-3 mb-4">
-                                                        <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-                                                            <Sparkles className="w-4 h-4 text-indigo-400" />
-                                                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Swarm Research Complete</span>
-                                                        </div>
+                                                {
+                                                    lead.swarmStatus === KimiSwarmStatus.COMPLETED && lead.arv && (
+                                                        <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/30 rounded-2xl p-4 space-y-3 mb-4">
+                                                            <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+                                                                <Sparkles className="w-4 h-4 text-indigo-400" />
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Swarm Research Complete</span>
+                                                            </div>
 
-                                                        {/* Key Metrics Grid */}
-                                                        <div className="grid grid-cols-3 gap-2">
-                                                            <div className="bg-white/5 rounded-xl p-2 text-center">
-                                                                <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">ARV</p>
-                                                                <p className="text-sm font-black text-emerald-400">${(lead.arv || 0).toLocaleString()}</p>
-                                                            </div>
-                                                            <div className="bg-white/5 rounded-xl p-2 text-center">
-                                                                <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">Est. Rehab</p>
-                                                                <p className="text-sm font-black text-amber-400">${(lead.estimatedRehabCost || 0).toLocaleString()}</p>
-                                                            </div>
-                                                            <div className="bg-white/5 rounded-xl p-2 text-center">
-                                                                <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">Profit</p>
-                                                                <p className="text-sm font-black text-emerald-400">${((lead.arv || 0) - (lead.totalLiabilities || 0) - (lead.estimatedRehabCost || 0)).toLocaleString()}</p>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Renovation Ideas */}
-                                                        {lead.renovationIdeas && lead.renovationIdeas.length > 0 && (
-                                                            <div className="space-y-1">
-                                                                <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Value-Add Opportunities</p>
-                                                                <div className="space-y-1">
-                                                                    {lead.renovationIdeas.slice(0, 3).map((idea, idx) => (
-                                                                        <div key={idx} className="flex items-center gap-2 text-[9px] text-slate-300">
-                                                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
-                                                                            {idea}
-                                                                        </div>
-                                                                    ))}
+                                                            {/* Key Metrics Grid */}
+                                                            <div className="grid grid-cols-3 gap-2">
+                                                                <div className="bg-white/5 rounded-xl p-2 text-center">
+                                                                    <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">ARV</p>
+                                                                    <p className="text-sm font-black text-emerald-400">${(lead.arv || 0).toLocaleString()}</p>
+                                                                </div>
+                                                                <div className="bg-white/5 rounded-xl p-2 text-center">
+                                                                    <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">Est. Rehab</p>
+                                                                    <p className="text-sm font-black text-amber-400">${(lead.estimatedRehabCost || 0).toLocaleString()}</p>
+                                                                </div>
+                                                                <div className="bg-white/5 rounded-xl p-2 text-center">
+                                                                    <p className="text-[7px] font-black uppercase tracking-widest text-slate-500 mb-1">Profit</p>
+                                                                    <p className="text-sm font-black text-emerald-400">${((lead.arv || 0) - (lead.totalLiabilities || 0) - (lead.estimatedRehabCost || 0)).toLocaleString()}</p>
                                                                 </div>
                                                             </div>
-                                                        )}
 
-                                                        {/* Research Notes */}
-                                                        {lead.swarmResearchNotes && (
-                                                            <div className="bg-white/5 rounded-xl p-2">
-                                                                <p className="text-[8px] font-black uppercase tracking-widest text-slate-500 mb-1">Intel Report</p>
-                                                                <p className="text-[9px] text-slate-400 leading-relaxed">{lead.swarmResearchNotes}</p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
+                                                            {/* Renovation Ideas */}
+                                                            {lead.renovationIdeas && lead.renovationIdeas.length > 0 && (
+                                                                <div className="space-y-1">
+                                                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Value-Add Opportunities</p>
+                                                                    <div className="space-y-1">
+                                                                        {lead.renovationIdeas.slice(0, 3).map((idea, idx) => (
+                                                                            <div key={idx} className="flex items-center gap-2 text-[9px] text-slate-300">
+                                                                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                                                                                {idea}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Research Notes */}
+                                                            {lead.swarmResearchNotes && (
+                                                                <div className="bg-white/5 rounded-xl p-2">
+                                                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500 mb-1">Intel Report</p>
+                                                                    <p className="text-[9px] text-slate-400 leading-relaxed">{lead.swarmResearchNotes}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                }
 
 
                                                 <div className="grid grid-cols-2 gap-3">
@@ -881,7 +1032,7 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                                         }}
                                                         className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-300 transition-all flex items-center justify-center gap-2"
                                                     >
-                                                        <Table className="w-3.5 h-3.5 text-indigo-400" /> Underwrite
+                                                        <Activity className="w-3.5 h-3.5 text-indigo-400" /> Get ARV
                                                     </button>
 
                                                     <button
@@ -1004,8 +1155,9 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                 </div>
                             )}
                         </div>
-                    )}
-                </div>
+                    )
+                    }
+                </div >
             ) : viewMode === 'underwriting' ? (
                 <div className="space-y-8 animate-in slide-in-from-right-8 duration-500 pb-20">
                     {/* Header Action Bar */}
@@ -1316,92 +1468,94 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
             )}
 
             {/* Contact Owner Modal */}
-            {isContactModalOpen && selectedLeadId && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-slate-900 rounded-[2rem] max-w-2xl w-full border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                        <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/5">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
-                                    <Mail className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-white tracking-tight">Owner Outreach</h3>
-                                    <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest">
-                                        AI Negotiator Active
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setIsContactModalOpen(false)}
-                                className="p-2 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-white"
-                            >
-                                <Users className="w-5 h-5 rotate-45" />
-                            </button>
-                        </div>
-
-                        <div className="p-8 space-y-6">
-                            {isDrafting ? (
-                                <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
-                                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-                                    <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 animate-pulse">
-                                        Generative AI Drafting Inquiry...
-                                    </p>
-                                </div>
-                            ) : contactStatus === 'sent' ? (
-                                <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
-                                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-2 animate-in zoom-in duration-300">
-                                        <FileCheck className="w-8 h-8 text-white" />
+            {
+                isContactModalOpen && selectedLeadId && (
+                    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div className="bg-slate-900 rounded-[2rem] max-w-2xl w-full border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                            <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/5">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
+                                        <Mail className="w-6 h-6 text-white" />
                                     </div>
-                                    <h4 className="text-2xl font-black text-white">Sent Successfully!</h4>
-                                    <p className="text-slate-400">Owner has been contacted via verified email channel.</p>
+                                    <div>
+                                        <h3 className="text-xl font-black text-white tracking-tight">Owner Outreach</h3>
+                                        <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest">
+                                            AI Negotiator Active
+                                        </p>
+                                    </div>
                                 </div>
-                            ) : (
-                                <>
-                                    <div className="bg-slate-950 rounded-xl p-4 border border-white/5 space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Subject</label>
-                                        <input
-                                            readOnly
-                                            value={`Inquiry regarding property at ${leads.find(l => l.id === selectedLeadId)?.propertyAddress}`}
-                                            className="w-full bg-transparent text-white font-bold text-sm outline-none border-b border-slate-800 pb-2 focus:border-indigo-500 transition-colors"
-                                        />
-                                    </div>
-                                    <div className="bg-slate-950 rounded-xl p-4 border border-white/5 space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex justify-between">
-                                            <span>AI Drafted Message</span>
-                                            <span className="text-slate-600">Model: Gemini 1.5 Flash</span>
-                                        </label>
-                                        <textarea
-                                            value={emailDraft}
-                                            onChange={(e) => setEmailDraft(e.target.value)}
-                                            className="w-full h-64 bg-transparent text-slate-300 font-medium text-sm leading-relaxed outline-none resize-none custom-scrollbar"
-                                        />
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        {contactStatus !== 'sent' && !isDrafting && (
-                            <div className="p-6 bg-slate-950 border-t border-white/5 flex justify-end gap-3">
                                 <button
                                     onClick={() => setIsContactModalOpen(false)}
-                                    className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                                    className="p-2 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-white"
                                 >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={sendInquiry}
-                                    disabled={contactStatus === 'sending'}
-                                    className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2"
-                                >
-                                    {contactStatus === 'sending' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                                    Send Message
+                                    <Users className="w-5 h-5 rotate-45" />
                                 </button>
                             </div>
-                        )}
+
+                            <div className="p-8 space-y-6">
+                                {isDrafting ? (
+                                    <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
+                                        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
+                                        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 animate-pulse">
+                                            Generative AI Drafting Inquiry...
+                                        </p>
+                                    </div>
+                                ) : contactStatus === 'sent' ? (
+                                    <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
+                                        <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-2 animate-in zoom-in duration-300">
+                                            <FileCheck className="w-8 h-8 text-white" />
+                                        </div>
+                                        <h4 className="text-2xl font-black text-white">Sent Successfully!</h4>
+                                        <p className="text-slate-400">Owner has been contacted via verified email channel.</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="bg-slate-950 rounded-xl p-4 border border-white/5 space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Subject</label>
+                                            <input
+                                                readOnly
+                                                value={`Inquiry regarding property at ${leads.find(l => l.id === selectedLeadId)?.propertyAddress}`}
+                                                className="w-full bg-transparent text-white font-bold text-sm outline-none border-b border-slate-800 pb-2 focus:border-indigo-500 transition-colors"
+                                            />
+                                        </div>
+                                        <div className="bg-slate-950 rounded-xl p-4 border border-white/5 space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex justify-between">
+                                                <span>AI Drafted Message</span>
+                                                <span className="text-slate-600">Model: Gemini 1.5 Flash</span>
+                                            </label>
+                                            <textarea
+                                                value={emailDraft}
+                                                onChange={(e) => setEmailDraft(e.target.value)}
+                                                className="w-full h-64 bg-transparent text-slate-300 font-medium text-sm leading-relaxed outline-none resize-none custom-scrollbar"
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {contactStatus !== 'sent' && !isDrafting && (
+                                <div className="p-6 bg-slate-950 border-t border-white/5 flex justify-end gap-3">
+                                    <button
+                                        onClick={() => setIsContactModalOpen(false)}
+                                        className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={sendInquiry}
+                                        disabled={contactStatus === 'sending'}
+                                        className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2"
+                                    >
+                                        {contactStatus === 'sending' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                                        Send Message
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

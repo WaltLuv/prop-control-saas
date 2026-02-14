@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   LayoutDashboard,
   Building2,
@@ -13,7 +12,6 @@ import {
   CheckSquare,
   Star,
   FileText,
-
   UserCircle,
   Database,
   X,
@@ -25,12 +23,11 @@ import {
   Hammer,
   FileCheck,
   ArrowRight,
-  ChevronRight,
   TrendingUp,
   BarChart4,
   Coins,
   Crown,
-  Lock, // Import Lock
+  Lock,
   Sparkles,
   Settings as SettingsIcon,
   XCircle,
@@ -53,11 +50,12 @@ interface SidebarProps {
   maxAssets: number;
   planName: string;
   currentPlan: PlanTier;
+  trialDaysLeft?: number;
 }
 
 type Module = 'operations' | 'investment' | 'institutional';
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onClose, onShowUpgradeModal, onManageSubscription, currentPlan, assetCount, maxAssets, planName }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onClose, onShowUpgradeModal, onManageSubscription, currentPlan, assetCount, maxAssets, planName, trialDaysLeft }) => {
   const [activeModule, setActiveModule] = useState<Module>(
     ['market-intel', 'jv-payout', 'underwriting', 'rehab-studio', 'loan-pitch'].includes(activeTab)
       ? 'investment'
@@ -69,27 +67,26 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
     { id: 'kpis', label: 'Performance', icon: ClipboardList },
     { id: 'assets', label: 'Properties', icon: Building2 },
     { id: 'tenants', label: 'Residents', icon: UserCircle },
-
-    { id: 'predictor', label: 'Neural Predictor', icon: BrainCircuit }, // Pro
-    { id: 'estimator', label: 'Service SOW', icon: FileText }, // Growth
-    { id: 'instant-calculator', label: 'Visual SOW', icon: Camera }, // Pro
-    { id: 'interior-design', label: 'AI Interior Design', icon: Palette }, // Pro
-    { id: 'inbox', label: 'Manual Inbox', icon: MessageSquare }, // Pro
-    { id: 'work-orders', label: 'Work Orders', icon: Wrench }, // Pro
+    { id: 'predictor', label: 'Neural Predictor', icon: BrainCircuit },
+    { id: 'estimator', label: 'Service SOW', icon: FileText },
+    { id: 'instant-calculator', label: 'Visual SOW', icon: Camera },
+    { id: 'interior-design', label: 'AI Interior Design', icon: Palette },
+    { id: 'inbox', label: 'Manual Inbox', icon: MessageSquare },
+    { id: 'work-orders', label: 'Work Orders', icon: Wrench },
     { id: 'contractors', label: 'Vendor Grid', icon: Users },
     { id: 'calculator', label: 'Turn Analysis', icon: Calculator },
     { id: 'checklist', label: 'Make-Ready SOP', icon: CheckSquare },
     { id: 'vendors', label: 'Scorecards', icon: Star },
-    { id: 'audit', label: 'Operations Audit', icon: ShieldAlert }, // Growth
+    { id: 'audit', label: 'Operations Audit', icon: ShieldAlert },
   ];
 
-  /* ... investmentItems ... */
   const investmentItems = [
     { id: 'market-intel', label: 'Market Intel', icon: Globe },
     { id: 'jv-payout', label: 'JV Payout Engine', icon: Coins },
-    { id: 'underwriting', label: 'Underwriting', icon: Table },
+    { id: 'underwriting', label: 'Deal Analysis', icon: Table },
     { id: 'rehab-studio', label: 'Rehab Studio', icon: Hammer },
     { id: 'loan-pitch', label: 'Loan Pitch', icon: FileCheck },
+    { id: 'rehab-analyzer', label: 'Deep Rehab Analyzer', icon: Sparkles },
   ];
 
   const institutionalItems = [
@@ -102,38 +99,24 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
     const planRank: Record<PlanTier, number> = { 'FREE': 0, 'GROWTH': 1, 'PRO': 2, 'PRO_MAX': 3 };
     const currentRank = planRank[currentPlan];
 
-    // GROWTH requirements
-    const growthTabs = ['audit', 'estimator'];
+    const growthTabs = ['audit', 'estimator', 'inbox', 'work-orders'];
     if (growthTabs.includes(item.id) && currentRank < 1) return true;
 
-    // PRO requirements
-    const proTabs = ['predictor', 'instant-calculator', 'interior-design', 'inbox', 'work-orders'];
+    const proTabs = ['predictor', 'instant-calculator', 'interior-design'];
     if (proTabs.includes(item.id) && currentRank < 2) return true;
 
-    // PRO_MAX requirements (Institutional Module)
     const proMaxTabs = ['market-intel', 'jv-payout', 'underwriting', 'rehab-studio', 'loan-pitch', 'inst-dashboard'];
     if (proMaxTabs.includes(item.id) && currentRank < 3) return true;
 
     return false;
   };
 
-  const planColor = PLANS[currentPlan].color; // 'slate', 'amber', 'indigo', 'emerald'
-  const badgeColors = {
-    slate: 'bg-slate-800 text-slate-300 border-slate-700',
-    amber: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    indigo: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-  };
-
-
   return (
     <aside className={`
       fixed md:sticky top-0 left-0 bottom-0 w-64 bg-slate-950 text-white flex flex-col p-6 shadow-2xl overflow-hidden border-r border-slate-900 transition-transform duration-500 ease-in-out z-50
       ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
     `}>
-      {/* ... Header ... */}
       <div className="flex items-center justify-between mb-8 px-2">
-        {/* Same header content */}
         <div className="flex items-center gap-4 group cursor-pointer">
           <div className="bg-indigo-600 p-3 rounded-2xl shadow-2xl shadow-indigo-600/30 group-hover:rotate-12 transition-transform duration-500 border border-white/10">
             <Zap className="w-5 h-5 text-white fill-white" />
@@ -146,9 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
         <button onClick={onClose} className="md:hidden p-2.5 hover:bg-white/5 rounded-2xl transition text-slate-500"><X className="w-5 h-5" /></button>
       </div>
 
-      {/* Module Switcher - Keep as is */}
       <div className="flex p-1 bg-white/5 rounded-2xl border border-white/5 mb-8">
-        {/* ... (Keep existing module switcher code) ... */}
         <button onClick={() => setActiveModule('operations')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeModule === 'operations' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>
           <BarChart4 className="w-3.5 h-3.5" /> Ops
         </button>
@@ -161,6 +142,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
+        {/* Trial Badge */}
+        {trialDaysLeft !== undefined && trialDaysLeft >= 0 && (
+          <div className="mb-4 mx-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/20">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-pink-400">Free Trial</span>
+            </div>
+            <div className="text-white text-xs font-bold mb-2">
+              {trialDaysLeft} Days Remaining
+            </div>
+            <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+              <div className="bg-pink-500 h-full rounded-full transition-all duration-1000" style={{ width: `${(trialDaysLeft / 7) * 100}%` }} />
+            </div>
+          </div>
+        )}
+
         <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4 px-4">
           {activeModule === 'operations' ? 'Operations Core' : 'Investment Lifecycle'}
         </p>
@@ -199,7 +196,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
         })}
       </nav>
 
-      {/* Global Actions (Settings, etc) */}
       <div className="py-4 border-t border-white/5 space-y-2">
         <button
           onClick={() => setActiveTab('settings')}
@@ -213,10 +209,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
         </button>
       </div>
 
-      {/* Subscription Badge */}
       <div className="pt-4 border-t border-white/5">
         {(() => {
-          // Pre-computed color map to avoid dynamic Tailwind class purging
           const colorMap: Record<string, { bg: string; text: string; border: string; iconBg: string }> = {
             slate: { bg: 'from-slate-500/10 to-slate-600/5', text: 'text-slate-400', border: 'border-slate-500/20', iconBg: 'bg-slate-500/20' },
             indigo: { bg: 'from-indigo-500/10 to-indigo-600/5', text: 'text-indigo-400', border: 'border-indigo-500/20', iconBg: 'bg-indigo-500/20' },
@@ -260,7 +254,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
         })()}
       </div>
 
-
       <div className="mt-auto pt-8 border-t border-white/5 space-y-6">
         <div className="space-y-3">
           <div className="flex items-center justify-between px-3 bg-white/5 p-4 rounded-2xl border border-white/5">
@@ -274,8 +267,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, onCl
             </div>
           </div>
         </div>
-
-
       </div>
 
       <style>{`
