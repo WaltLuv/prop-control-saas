@@ -119,8 +119,8 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
     assets,
     onUpdateAssets
 }) => {
-    // Mode toggle between Sourcing, Underwriting and Mission Control
-    const [viewMode, setViewMode] = useState<'sourcing' | 'underwriting' | 'settings'>('sourcing');
+    // Mode toggle between Sourcing, Underwriting, Mission Control, and Get Appraisal
+    const [viewMode, setViewMode] = useState<'sourcing' | 'underwriting' | 'settings' | 'appraisal'>('sourcing');
 
     // --- REALTIME SWARM FEED ---
     // Removed simulation interval. Leads are now static until user triggers action or manually refreshes.
@@ -173,6 +173,37 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
     const [emailDraft, setEmailDraft] = useState('');
     const [isDrafting, setIsDrafting] = useState(false);
     const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+
+    // Appraisal State
+    const [appraisalAddress, setAppraisalAddress] = useState('');
+    const [appraisalResult, setAppraisalResult] = useState<any>(null);
+    const [isAppraising, setIsAppraising] = useState(false);
+
+    const handleGetAppraisal = async () => {
+        if (!appraisalAddress) return;
+        setIsAppraising(true);
+        setAppraisalResult(null);
+
+        try {
+            const { data, error } = await supabase.functions.invoke('appraisal-bundle', {
+                body: {
+                    address: appraisalAddress,
+                    property: {
+                        id: 'temp-id',
+                        address: appraisalAddress
+                    }
+                }
+            });
+
+            if (error) throw error;
+            setAppraisalResult(data);
+        } catch (err: any) {
+            console.error('Appraisal failed:', err);
+            alert(`Appraisal failed: ${err.message || 'Please check API Key'}`);
+        } finally {
+            setIsAppraising(false);
+        }
+    };
 
     // Telemetry State
     const [swarmLogs, setSwarmLogs] = useState<string[]>([]);
@@ -489,7 +520,8 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                         Investment Ideas <span className="text-slate-300">/</span> {
                             viewMode === 'sourcing' ? 'Discovery' :
                                 viewMode === 'underwriting' ? 'Underwriting' :
-                                    'Mission Control'
+                                    viewMode === 'appraisal' ? 'Get Appraisal' :
+                                        'Mission Control'
                         }
                     </h1>
                 </div>
@@ -519,11 +551,88 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                         >
                             Mission Control
                         </button>
+                        <button
+                            onClick={() => setViewMode('appraisal')}
+                            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'appraisal' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                        >
+                            Get Appraisal
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {viewMode === 'sourcing' ? (
+            {viewMode === 'appraisal' ? (
+                <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 min-h-[500px]">
+                    <div className="max-w-2xl mx-auto text-center mb-10">
+                        <h2 className="text-2xl font-black text-slate-900 mb-2">Instant Valuation</h2>
+                        <p className="text-slate-500">Enter any address to generate a comprehensive automated valuation report.</p>
+                    </div>
+
+                    <div className="max-w-xl mx-auto space-y-6">
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Enter full property address..."
+                                value={appraisalAddress}
+                                onChange={(e) => setAppraisalAddress(e.target.value)}
+                                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 transition-all text-lg"
+                            />
+                        </div>
+
+                        <button
+                            onClick={handleGetAppraisal}
+                            disabled={!appraisalAddress || isAppraising}
+                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl shadow-lg shadow-indigo-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isAppraising ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" /> Running Valuation Algorithm...
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="w-5 h-5" /> Run Valuation
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {appraisalResult && (
+                        <div className="max-w-4xl mx-auto mt-12 animate-in slide-in-from-bottom-4 duration-700">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <KPICard
+                                    title="Est. Market Value"
+                                    value={`$${appraisalResult.price?.toLocaleString() || 'N/A'}`}
+                                    subValue="Based on AVM"
+                                    icon={DollarSign}
+                                    colorClass={{ bg: 'bg-emerald-100', text: 'text-emerald-600' }}
+                                />
+                                <KPICard
+                                    title="Confidence Score"
+                                    value="High"
+                                    subValue="Algorithm Confidence"
+                                    icon={Target}
+                                    colorClass={{ bg: 'bg-blue-100', text: 'text-blue-600' }}
+                                />
+                                <KPICard
+                                    title="Rent Estimate"
+                                    value={`$${appraisalResult.rent?.toLocaleString() || 'N/A'}`}
+                                    subValue="/ month"
+                                    icon={Coins}
+                                    colorClass={{ bg: 'bg-purple-100', text: 'text-purple-600' }}
+                                />
+                            </div>
+
+                            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-4">Property Details</h3>
+                                <pre className="text-xs text-slate-600 overflow-auto max-h-60">
+                                    {JSON.stringify(appraisalResult, null, 2)}
+                                </pre>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : viewMode === 'sourcing' ? (
                 <div className="space-y-8">
                     {/* Strategic Workspace Header */}
                     <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">
@@ -797,7 +906,7 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                                             to={`/properties/${lead.id}/financials`}
                                                             className="px-3 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors flex items-center gap-1 shadow-md shadow-indigo-500/20"
                                                         >
-                                                            <Activity className="w-3 h-3" /> Underwrite
+                                                            <Activity className="w-3 h-3" /> Get ARV
                                                         </Link>
                                                     </div>
                                                 </div>

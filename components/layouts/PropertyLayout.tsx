@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, Outlet, useParams, Link, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useParams, Link, useLocation, Navigate } from 'react-router-dom';
 import { ArrowLeft, Crown, Lock } from 'lucide-react';
 import { Asset, UserProfile, InvestmentLead } from '../../types';
 
@@ -46,9 +46,17 @@ export default function PropertyLayout({ assets, leads = [], userProfile, setSho
     React.useEffect(() => {
         if (!isProMax && (location.pathname.endsWith('/financials') || location.pathname.endsWith('/rent') || location.pathname.endsWith('/comps'))) {
             setShowUpgradeModal(true);
-            // Optionally redirect back to overview or let the modal handle it (blocking view)
         }
-    }, [location.pathname, isProMax, setShowUpgradeModal]);
+        // Redirect Leads to Financials (skip Overview)
+        if (leadMatch && location.pathname.endsWith(`/${propertyId}`)) {
+            // We can't easily use navigate here without hook, but we can return <Navigate> in render
+        }
+    }, [location.pathname, isProMax, setShowUpgradeModal, leadMatch, propertyId]);
+
+    // Redirect Leads from Overview to Financials
+    if (leadMatch && location.pathname.endsWith(`/${propertyId}`)) {
+        return <Navigate to={`/properties/${propertyId}/financials`} replace />;
+    }
 
     if (!property) {
         return (
@@ -95,9 +103,9 @@ export default function PropertyLayout({ assets, leads = [], userProfile, setSho
                         </div>
                     </div>
 
-                    {/* Bottom Row: Navigation Tabs */}
+
                     <nav className="flex space-x-8 -mb-px overflow-x-auto">
-                        <TabLink to="" end label="Overview" icon="🏠" />
+                        {!leadMatch && <TabLink to="" end label="Overview" icon="🏠" />}
 
                         <div className="relative group">
                             <TabLink to="financials" label="Financials & ARV" icon="💰" locked={!isProMax} />
