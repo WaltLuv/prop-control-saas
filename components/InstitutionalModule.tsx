@@ -799,23 +799,37 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
 
                                                 {/* Priority Badge */}
                                                 {isHotLead && (
-                                                    <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.5)] border border-emerald-400 z-20 animate-pulse">
-                                                        Alpha Target
+                                                    <div className="absolute top-4 left-4 bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-2 animate-pulse">
+                                                        <ShieldAlert className="w-3 h-3" />
+                                                        Priority
                                                     </div>
                                                 )}
 
-                                                <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                                                    <span className="px-3 py-1 bg-slate-950/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-lg border border-white/10">{lead.distressIndicator}</span>
+                                                <div className="absolute top-4 right-4 flex flex-col gap-2">
+                                                    <div className="bg-slate-900/90 backdrop-blur-md text-slate-300 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-white/10 shadow-lg">
+                                                        {lead.distressIndicator}
+                                                    </div>
                                                 </div>
 
-                                                {lead.conditionScore && (
-                                                    <div className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-lg">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className={`w-1.5 h-1.5 rounded-full ${lead.conditionScore < 5 ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'}`} />
-                                                            <span className="text-[10px] font-black text-white uppercase tracking-widest">Score: {lead.conditionScore}/10</span>
-                                                        </div>
+                                                {/* Swarm Status Indicator */}
+                                                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
+                                                        <div className={`w-2 h-2 rounded-full ${lead.swarmStatus === KimiSwarmStatus.COMPLETED ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
+                                                            lead.swarmStatus === KimiSwarmStatus.RESEARCHING ? 'bg-amber-400 animate-pulse' :
+                                                                lead.swarmStatus === KimiSwarmStatus.DEPLOYING ? 'bg-blue-400 animate-ping' :
+                                                                    'bg-slate-500'
+                                                            }`} />
+                                                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">
+                                                            {lead.swarmStatus || 'Swarm Ready'}
+                                                        </span>
                                                     </div>
-                                                )}
+                                                    {lead.conditionScore && (
+                                                        <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2">
+                                                            <div className={`w-1.5 h-1.5 rounded-full ${lead.conditionScore < 5 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                                                            <span className="text-[9px] font-black text-white uppercase tracking-widest">{lead.conditionScore}/10</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <div className="p-8 flex-1 flex flex-col justify-between relative z-10 bg-gradient-to-b from-transparent to-slate-950/50">
@@ -1006,7 +1020,7 @@ const InstitutionalModule: React.FC<InstitutionalModuleProps> = ({
                                                         }}
                                                         className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-300 transition-all flex items-center justify-center gap-2"
                                                     >
-                                                        <Table className="w-3.5 h-3.5 text-indigo-400" /> Underwrite
+                                                        <Activity className="w-3.5 h-3.5 text-indigo-400" /> Get ARV
                                                     </button>
 
                                                     <button
