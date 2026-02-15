@@ -471,12 +471,17 @@ const LOCAL_COST_DB: Record<string, { low: number; mid: number; high: number; un
 const callWithRetry = async <T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
-  initialDelay: number = 1000
+  initialDelay: number = 1000,
+  timeoutMs: number = 60000
 ): Promise<T> => {
   let lastError: Error | null = null;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await fn();
+      // Add timeout to prevent infinite hanging
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout - API took too long to respond')), timeoutMs)
+      );
+      return await Promise.race([fn(), timeoutPromise]);
     } catch (error: any) {
       lastError = error;
       const isRateLimited = error.message?.includes('429') ||
